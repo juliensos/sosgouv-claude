@@ -250,30 +250,59 @@
     
     // Vérifier la session au chargement
     async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const debugEl = document.getElementById('debugInfo');
+      const notConnectedEl = document.getElementById('notConnected');
+      let debugText = '';
       
-      if (!session) {
-        // Pas de session = pas connecté
-        showAlert('Vous devez être connecté pour accéder à cette page', 'error');
-        setTimeout(() => {
-          window.location.href = 'auth-complete-system.html';
-        }, 2000);
-        return false;
+      function addDebug(msg) {
+        debugText += msg + '\n';
+        if (debugEl) debugEl.textContent = debugText;
+        console.log(msg);
       }
       
-      // Récupérer le profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-      
-      if (profile) {
-        currentUser = profile;
-        document.getElementById('currentUsername').textContent = profile.username;
-        return true;
-      } else {
-        showAlert('Profil introuvable', 'error');
+      try {
+        addDebug('🔍 Vérification de la session...');
+        
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        addDebug(`Session error: ${sessionError || 'none'}`);
+        addDebug(`Session existe: ${!!session}`);
+        
+        if (!session) {
+          addDebug('❌ PROBLÈME: Aucune session détectée');
+          addDebug('Vous devez être connecté via auth-complete-system.html d\'abord');
+          notConnectedEl?.classList.remove('hide');
+          return false;
+        }
+        
+        addDebug(`✅ Session trouvée`);
+        addDebug(`User ID: ${session.user.id}`);
+        addDebug(`User Email: ${session.user.email || 'none'}`);
+        
+        // Récupérer le profile
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        addDebug(`Profile error: ${profileError?.message || 'none'}`);
+        
+        if (profile) {
+          addDebug(`✅ Profile trouvé: ${profile.username}`);
+          currentUser = profile;
+          document.getElementById('currentUsername').textContent = profile.username;
+          // Cacher le message "non connecté" si affiché par erreur
+          if (notConnectedEl) notConnectedEl.classList.add('hide');
+          return true;
+        } else {
+          addDebug('❌ Profil introuvable dans la base');
+          notConnectedEl?.classList.remove('hide');
+          return false;
+        }
+      } catch (error) {
+        addDebug(`❌ ERREUR: ${error.message}`);
+        notConnectedEl?.classList.remove('hide');
         return false;
       }
     }
