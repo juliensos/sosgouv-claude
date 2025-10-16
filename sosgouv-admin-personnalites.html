@@ -468,42 +468,66 @@
     
     // Vérifier si admin
     async function checkAdmin() {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        // Pas de session = pas connecté
+      try {
+        // Log pour debug
+        console.log('🔍 Vérification admin...');
+        
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        console.log('Session:', session);
+        console.log('Session error:', sessionError);
+        
+        if (!session) {
+          console.log('❌ Pas de session détectée');
+          document.getElementById('accessDenied').classList.remove('hide');
+          setTimeout(() => {
+            window.location.href = 'auth-complete-system.html';
+          }, 2000);
+          return false;
+        }
+        
+        console.log('✅ Session trouvée:', session.user.email);
+        
+        // Récupérer le profile
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        console.log('Profile:', profile);
+        console.log('Profile error:', profileError);
+        
+        // Vérifier si c'est l'admin (3 sources possibles)
+        const isAdmin = (
+          (profile && profile.email === ADMIN_EMAIL) ||           // Email dans profiles
+          (session.user.email === ADMIN_EMAIL) ||                 // Email Supabase Auth
+          (profile && profile.username === 'julienmailsosgouv')   // Username admin
+        );
+        
+        console.log('Is Admin?', isAdmin);
+        console.log('Email profile:', profile?.email);
+        console.log('Email session:', session.user.email);
+        console.log('Username:', profile?.username);
+        
+        if (isAdmin) {
+          currentUser = profile || { id: session.user.id, username: session.user.email };
+          document.getElementById('currentUsername').textContent = profile?.username || session.user.email;
+          document.getElementById('adminContent').classList.remove('hide');
+          loadPersonnalites();
+          return true;
+        }
+        
+        // Pas admin = accès refusé
+        console.log('❌ Pas admin');
         document.getElementById('accessDenied').classList.remove('hide');
-        setTimeout(() => {
-          window.location.href = 'auth-complete-system.html';
-        }, 2000);
+        return false;
+        
+      } catch (error) {
+        console.error('Erreur checkAdmin:', error);
+        document.getElementById('accessDenied').classList.remove('hide');
         return false;
       }
-      
-      // Récupérer le profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-      
-      // Vérifier si c'est l'admin (3 sources possibles)
-      const isAdmin = (
-        (profile && profile.email === ADMIN_EMAIL) ||           // Email dans profiles
-        (session.user.email === ADMIN_EMAIL) ||                 // Email Supabase Auth
-        (profile && profile.username === 'julienmailsosgouv')   // Username admin
-      );
-      
-      if (isAdmin) {
-        currentUser = profile;
-        document.getElementById('currentUsername').textContent = profile.username || session.user.email;
-        document.getElementById('adminContent').classList.remove('hide');
-        loadPersonnalites();
-        return true;
-      }
-      
-      // Pas admin = accès refusé
-      document.getElementById('accessDenied').classList.remove('hide');
-      return false;
     }
     
     // Charger toutes les personnalités
