@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Enrichir Personnalités - SOSGOUV</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .header h1 {
+      color: #e74c3c;
+      margin-bottom: 5px;
+    }
+    
+    .admin-badge {
+      display: inline-block;
+      background: #e74c3c;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    
+    .selection-mode {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+    
+    .mode-btn {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+    
+    .mode-btn.active {
+      border-color: #e74c3c;
+      background: #e74c3c;
+      color: white;
+    }
+    
+    .mode-btn:hover {
+      border-color: #e74c3c;
+    }
+    
+    h2 {
+      color: #333;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e74c3c;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #333;
+      font-weight: 500;
+    }
+    
+    input[type="text"],
+    input[type="date"],
+    input[type="url"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    
+    #searchPersonnalite {
+      font-size: 16px;
+      padding: 12px;
+      border: 2px solid #ddd;
+    }
+    
+    #searchPersonnalite:focus {
+      border-color: #e74c3c;
+      outline: none;
+    }
+    
+    .search-results {
+      border: 1px solid #ddd;
+      border-top: none;
+      border-radius: 0 0 5px 5px;
+      max-height: 250px;
+      overflow-y: auto;
+      background: white;
+      position: absolute;
+      width: calc(100% - 60px);
+      z-index: 100;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .search-result-item {
+      padding: 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.2s;
+    }
+    
+    .search-result-item:hover {
+      background: #f8f9fa;
+    }
+    
+    .search-result-item strong {
+      color: #333;
+    }
+    
+    .search-result-item small {
+      color: #666;
+      display: block;
+      margin-top: 3px;
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    textarea.rich {
+      min-height: 150px;
+    }
+    
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+    
+    .btn-primary {
+      background: #e74c3c;
+      color: white;
+      width: 100%;
+    }
+    
+    .btn-primary:hover {
+      background: #c0392b;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(231,76,60,0.3);
+    }
+    
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+    
+    .btn-secondary:hover {
+      background: #d0d0d0;
+    }
+    
+    .btn-small {
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+    
+    .liens-container {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 15px;
+      margin-top: 10px;
+    }
+    
+    .lien-item {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    
+    .lien-item input {
+      flex: 1;
+    }
+    
+    .alert {
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .alert-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .alert-warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+    
+    .hide {
+      display: none;
+    }
+    
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    
+    .selected-perso-info {
+      background: #e8f5e9;
+      border: 2px solid #4caf50;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .selected-perso-info h3 {
+      color: #2e7d32;
+      margin-bottom: 8px;
+    }
+    
+    .selected-perso-info p {
+      color: #555;
+      margin: 5px 0;
+    }
+    
+    @media (max-width: 768px) {
+      .row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="auth-complete-system.html" class="back-link">← Retour</a>
+    
+    <div class="header">
+      <h1>
+        🔐 Administration Personnalités
+        <span class="admin-badge">ADMIN</span>
+      </h1>
+      <div style="color: #666; margin-top: 5px;">
+        Connecté en tant que : <strong id="currentUsername"></strong>
+      </div>
+    </div>
+    
+    <div id="alertContainer"></div>
+    
+    <div id="accessDenied" class="card hide">
+      <div class="alert alert-error">
+        ❌ <strong>Accès refusé</strong><br>
+        Cette page est réservée aux administrateurs.
+      </div>
+    </div>
+    
+    <div id="adminContent" class="hide">
+      <div class="card">
+        <h2>Mode de travail</h2>
+        <div class="selection-mode">
+          <button class="mode-btn active" onclick="switchMode('enrichir')">
+            📝 Enrichir une personnalité existante
+          </button>
+          <button class="mode-btn" onclick="switchMode('creer')">
+            ➕ Créer une nouvelle personnalité
+          </button>
+        </div>
+        
+        <!-- Section Enrichir -->
+        <div id="enrichirSection">
+          <div class="form-group">
+            <label for="searchPersonnalite">
+              🔍 Rechercher une personnalité à enrichir
+            </label>
+            <input 
+              type="text" 
+              id="searchPersonnalite" 
+              placeholder="Tapez les premières lettres du nom ou prénom..."
+              autocomplete="off"
+            >
+            <div id="searchResults" class="search-results hide"></div>
+          </div>
+          
+          <div id="selectedPersoInfo" class="hide"></div>
+        </div>
+      </div>
+      
+      <form id="personnaliteForm" class="card">
+        <h2>Informations complètes</h2>
+        
+        <input type="hidden" id="personnaliteId">
+        
+        <div class="row">
+          <div class="form-group">
+            <label for="nom">Nom *</label>
+            <input type="text" id="nom" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="prenom">Prénom *</label>
+            <input type="text" id="prenom" required>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="form-group">
+            <label for="profession">Profession</label>
+            <input type="text" id="profession" placeholder="Ex: Avocat, Entrepreneur...">
+          </div>
+          
+          <div class="form-group">
+            <label for="sexe">Sexe</label>
+            <select id="sexe">
+              <option value="non-specifie">Non spécifié</option>
+              <option value="homme">Homme</option>
+              <option value="femme">Femme</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="form-group">
+            <label for="dateNaissance">Date de naissance</label>
+            <input type="date" id="dateNaissance">
+          </div>
+          
+          <div class="form-group">
+            <label for="photoUrl">URL Photo</label>
+            <input type="url" id="photoUrl" placeholder="https://...">
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="form-group">
+            <label for="statut">Statut</label>
+            <select id="statut">
+              <option value="neant">Néant</option>
+              <option value="refus">Refus</option>
+              <option value="suspend">Suspendu</option>
+              <option value="ok">Validé (OK)</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="nbLikes">Nombre de likes</label>
+            <input type="number" id="nbLikes" value="0" min="0">
+          </div>
+        </div>
+        
+        <h2 style="margin-top: 30px;">Biographie</h2>
+        
+        <div class="form-group">
+          <label for="shortBio">Bio courte</label>
+          <textarea id="shortBio" placeholder="Description rapide..."></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="bioRich">Bio complète</label>
+          <textarea id="bioRich" class="rich" placeholder="Biographie détaillée..."></textarea>
+        </div>
+        
+        <h2 style="margin-top: 30px;">Fonction(s)</h2>
+        
+        <div class="form-group">
+          <label for="fonction">Ajouter une fonction</label>
+          <input type="text" id="fonction" placeholder="Ex: Ministre de la Justice">
+        </div>
+        
+        <h2 style="margin-top: 30px;">Liens et références</h2>
+        
+        <div class="form-group">
+          <label>Ajouter des liens</label>
+          <div class="liens-container" id="liensContainer">
+            <div class="lien-item">
+              <select class="lien-type">
+                <option value="article">Article</option>
+                <option value="video">Vidéo</option>
+                <option value="social">Réseau social</option>
+                <option value="autre">Autre</option>
+              </select>
+              <input type="url" class="lien-url" placeholder="https://...">
+              <input type="text" class="lien-titre" placeholder="Titre">
+            </div>
+          </div>
+          <button type="button" class="btn btn-secondary btn-small" onclick="ajouterLien()">+ Ajouter un lien</button>
+        </div>
+        
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+          Enregistrer les modifications
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://ubttetrqvvbcgvwjbylr.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    const ADMIN_EMAIL = 'sosgouv@gmail.com';
+    let currentUser = null;
+    let currentMode = 'enrichir';
+    let selectedPersonnalite = null;
+    let allPersonnalites = [];
+    
+    // Vérifier si admin
+    async function checkAdmin() {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // Mode test pour développement
+        currentUser = { username: 'Admin', email: ADMIN_EMAIL };
+        document.getElementById('currentUsername').textContent = 'Admin (mode test)';
+        document.getElementById('adminContent').classList.remove('hide');
+        loadPersonnalites();
+        return true;
+      }
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (profile && profile.email === ADMIN_EMAIL) {
+        currentUser = profile;
+        document.getElementById('currentUsername').textContent = profile.username;
+        document.getElementById('adminContent').classList.remove('hide');
+        loadPersonnalites();
+        return true;
+      }
+      
+      document.getElementById('accessDenied').classList.remove('hide');
+      return false;
+    }
+    
+    // Charger toutes les personnalités
+    async function loadPersonnalites() {
+      const { data, error } = await supabase
+        .from('personnalites')
+        .select('*')
+        .order('nom');
+      
+      if (!error && data) {
+        allPersonnalites = data;
+      }
+    }
+    
+    // Recherche en temps réel
+    let searchTimeout;
+    document.getElementById('searchPersonnalite')?.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      const query = e.target.value.toLowerCase().trim();
+      
+      if (query.length < 2) {
+        document.getElementById('searchResults').classList.add('hide');
+        return;
+      }
+      
+      searchTimeout = setTimeout(() => {
+        const results = allPersonnalites.filter(p => 
+          p.nom.toLowerCase().includes(query) || 
+          p.prenom.toLowerCase().includes(query)
+        ).slice(0, 10);
+        
+        displaySearchResults(results);
+      }, 300);
+    });
+    
+    // Afficher résultats de recherche
+    function displaySearchResults(results) {
+      const container = document.getElementById('searchResults');
+      
+      if (results.length === 0) {
+        container.innerHTML = '<div class="search-result-item">Aucun résultat</div>';
+        container.classList.remove('hide');
+        return;
+      }
+      
+      container.innerHTML = results.map(p => `
+        <div class="search-result-item" onclick='selectPersonnalite(${JSON.stringify(p)})'>
+          <strong>${p.prenom} ${p.nom}</strong>
+          <small>${p.profession || 'Profession non renseignée'} - Ajouté par ${p.ajoute_par_username}</small>
+        </div>
+      `).join('');
+      
+      container.classList.remove('hide');
+    }
+    
+    // Sélectionner une personnalité
+    async function selectPersonnalite(perso) {
+      selectedPersonnalite = perso;
+      document.getElementById('searchResults').classList.add('hide');
+      document.getElementById('searchPersonnalite').value = `${perso.prenom} ${perso.nom}`;
+      
+      // Charger les détails complets
+      const { data: full } = await supabase
+        .from('personnalites')
+        .select(`
+          *,
+          personnalite_fonctions(*),
+          personnalite_liens(*)
+        `)
+        .eq('id', perso.id)
+        .single();
+      
+      if (full) {
+        selectedPersonnalite = full;
+        displaySelectedPerso(full);
+        fillForm(full);
+      }
+    }
+    
+    // Afficher infos personnalité sélectionnée
+    function displaySelectedPerso(perso) {
+      const info = document.getElementById('selectedPersoInfo');
+      info.innerHTML = `
+        <div class="selected-perso-info">
+          <h3>✓ Personnalité sélectionnée</h3>
+          <p><strong>${perso.prenom} ${perso.nom}</strong></p>
+          <p>Profession: ${perso.profession || 'Non renseignée'}</p>
+          <p>Statut actuel: <strong>${perso.statut.toUpperCase()}</strong></p>
+          <p>Ajouté par: ${perso.ajoute_par_username}</p>
+        </div>
+      `;
+      info.classList.remove('hide');
+    }
+    
+    // Remplir le formulaire
+    function fillForm(perso) {
+      document.getElementById('personnaliteId').value = perso.id;
+      document.getElementById('nom').value = perso.nom;
+      document.getElementById('prenom').value = perso.prenom;
+      document.getElementById('profession').value = perso.profession || '';
+      document.getElementById('sexe').value = perso.sexe || 'non-specifie';
+      document.getElementById('dateNaissance').value = perso.date_naissance || '';
+      document.getElementById('photoUrl').value = perso.photo_url || '';
+      document.getElementById('statut').value = perso.statut || 'neant';
+      document.getElementById('nbLikes').value = perso.nb_likes || 0;
+      document.getElementById('shortBio').value = perso.short_bio || '';
+      document.getElementById('bioRich').value = perso.bio_rich_text || '';
+      
+      // Charger les liens existants
+      const container = document.getElementById('liensContainer');
+      container.innerHTML = '';
+      
+      if (perso.personnalite_liens && perso.personnalite_liens.length > 0) {
+        perso.personnalite_liens.forEach(lien => {
+          const item = createLienItem(lien);
+          container.appendChild(item);
+        });
+      } else {
+        container.appendChild(createLienItem());
+      }
+    }
+    
+    // Créer un champ de lien
+    function createLienItem(lien = null) {
+      const div = document.createElement('div');
+      div.className = 'lien-item';
+      div.innerHTML = `
+        <select class="lien-type">
+          <option value="article" ${lien?.type === 'article' ? 'selected' : ''}>Article</option>
+          <option value="video" ${lien?.type === 'video' ? 'selected' : ''}>Vidéo</option>
+          <option value="social" ${lien?.type === 'social' ? 'selected' : ''}>Réseau social</option>
+          <option value="autre" ${lien?.type === 'autre' ? 'selected' : ''}>Autre</option>
+        </select>
+        <input type="url" class="lien-url" placeholder="https://..." value="${lien?.url || ''}">
+        <input type="text" class="lien-titre" placeholder="Titre" value="${lien?.titre || ''}">
+        <button type="button" class="btn btn-secondary btn-small" onclick="this.parentElement.remove()">×</button>
+      `;
+      return div;
+    }
+    
+    function ajouterLien() {
+      document.getElementById('liensContainer').appendChild(createLienItem());
+    }
+    
+    // Changer de mode
+    function switchMode(mode) {
+      currentMode = mode;
+      const buttons = document.querySelectorAll('.mode-btn');
+      buttons.forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      if (mode === 'creer') {
+        document.getElementById('enrichirSection').classList.add('hide');
+        document.getElementById('personnaliteForm').reset();
+        document.getElementById('personnaliteId').value = '';
+        document.getElementById('submitBtn').textContent = 'Créer cette personnalité';
+        selectedPersonnalite = null;
+      } else {
+        document.getElementById('enrichirSection').classList.remove('hide');
+        document.getElementById('submitBtn').textContent = 'Enregistrer les modifications';
+      }
+    }
+    
+    // Afficher alerte
+    function showAlert(message, type = 'success') {
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type}`;
+      alert.textContent = message;
+      document.getElementById('alertContainer').appendChild(alert);
+      setTimeout(() => alert.remove(), 5000);
+    }
+    
+    // Soumettre le formulaire
+    document.getElementById('personnaliteForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const id = document.getElementById('personnaliteId').value;
+      const isUpdate = !!id;
+      
+      try {
+        const persoData = {
+          nom: document.getElementById('nom').value,
+          prenom: document.getElementById('prenom').value,
+          profession: document.getElementById('profession').value || null,
+          sexe: document.getElementById('sexe').value,
+          date_naissance: document.getElementById('dateNaissance').value || null,
+          photo_url: document.getElementById('photoUrl').value || null,
+          short_bio: document.getElementById('shortBio').value || null,
+          bio_rich_text: document.getElementById('bioRich').value || null,
+          statut: document.getElementById('statut').value,
+          nb_likes: parseInt(document.getElementById('nbLikes').value) || 0
+        };
+        
+        let personnaliteId;
+        
+        if (isUpdate) {
+          // Mise à jour
+          const { error } = await supabase
+            .from('personnalites')
+            .update(persoData)
+            .eq('id', id);
+          
+          if (error) throw error;
+          personnaliteId = id;
+          
+          // Supprimer anciens liens
+          await supabase
+            .from('personnalite_liens')
+            .delete()
+            .eq('personnalite_id', id);
+          
+        } else {
+          // Création
+          persoData.ajoute_par_id = currentUser.id || null;
+          persoData.ajoute_par_username = currentUser.username;
+          
+          const { data, error } = await supabase
+            .from('personnalites')
+            .insert(persoData)
+            .select()
+            .single();
+          
+          if (error) throw error;
+          personnaliteId = data.id;
+        }
+        
+        // Ajouter fonction si renseignée
+        const fonction = document.getElementById('fonction').value;
+        if (fonction && !isUpdate) {
+          await supabase
+            .from('personnalite_fonctions')
+            .insert({
+              personnalite_id: personnaliteId,
+              fonction: fonction,
+              propose_par_id: currentUser.id || null,
+              propose_par_username: currentUser.username,
+              nb_votes: 1
+            });
+        }
+        
+        // Ajouter les liens
+        const liensItems = document.querySelectorAll('.lien-item');
+        const liens = [];
+        
+        liensItems.forEach(item => {
+          const url = item.querySelector('.lien-url').value;
+          if (url) {
+            liens.push({
+              personnalite_id: personnaliteId,
+              url: url,
+              titre: item.querySelector('.lien-titre').value || null,
+              type: item.querySelector('.lien-type').value
+            });
+          }
+        });
+        
+        if (liens.length > 0) {
+          await supabase
+            .from('personnalite_liens')
+            .insert(liens);
+        }
+        
+        showAlert(isUpdate 
+          ? '✅ Personnalité mise à jour avec succès !' 
+          : '✅ Personnalité créée avec succès !');
+        
+        // Recharger la liste
+        await loadPersonnalites();
+        
+        if (isUpdate) {
+          document.getElementById('searchPersonnalite').value = '';
+          document.getElementById('selectedPersoInfo').classList.add('hide');
+        }
+        
+        document.getElementById('personnaliteForm').reset();
+        
+      } catch (error) {
+        console.error('Erreur:', error);
+        showAlert('❌ Erreur : ' + error.message, 'error');
+      }
+    });
+    
+    // Initialiser
+    checkAdmin();
+  </script>
+</body>
+</html>
