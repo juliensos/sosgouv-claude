@@ -471,28 +471,37 @@
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        // Mode test pour développement
-        currentUser = { username: 'Admin', email: ADMIN_EMAIL };
-        document.getElementById('currentUsername').textContent = 'Admin (mode test)';
-        document.getElementById('adminContent').classList.remove('hide');
-        loadPersonnalites();
-        return true;
+        // Pas de session = pas connecté
+        document.getElementById('accessDenied').classList.remove('hide');
+        setTimeout(() => {
+          window.location.href = 'auth-complete-system.html';
+        }, 2000);
+        return false;
       }
       
+      // Récupérer le profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
         .single();
       
-      if (profile && profile.email === ADMIN_EMAIL) {
+      // Vérifier si c'est l'admin (3 sources possibles)
+      const isAdmin = (
+        (profile && profile.email === ADMIN_EMAIL) ||           // Email dans profiles
+        (session.user.email === ADMIN_EMAIL) ||                 // Email Supabase Auth
+        (profile && profile.username === 'julienmailsosgouv')   // Username admin
+      );
+      
+      if (isAdmin) {
         currentUser = profile;
-        document.getElementById('currentUsername').textContent = profile.username;
+        document.getElementById('currentUsername').textContent = profile.username || session.user.email;
         document.getElementById('adminContent').classList.remove('hide');
         loadPersonnalites();
         return true;
       }
       
+      // Pas admin = accès refusé
       document.getElementById('accessDenied').classList.remove('hide');
       return false;
     }
@@ -708,7 +717,7 @@
           
         } else {
           // Création
-          persoData.ajoute_par_id = currentUser.id || null;
+          persoData.ajoute_par_id = currentUser.id;
           persoData.ajoute_par_username = currentUser.username;
           
           const { data, error } = await supabase
@@ -729,7 +738,7 @@
             .insert({
               personnalite_id: personnaliteId,
               fonction: fonction,
-              propose_par_id: currentUser.id || null,
+              propose_par_id: currentUser.id,
               propose_par_username: currentUser.username,
               nb_votes: 1
             });

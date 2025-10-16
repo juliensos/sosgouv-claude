@@ -247,11 +247,12 @@
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        // Test user pour développement
-        const testUser = { username: 'TestUser' };
-        currentUser = testUser;
-        document.getElementById('currentUsername').textContent = testUser.username;
-        return;
+        // Pas de session = pas connecté
+        showAlert('Vous devez être connecté pour accéder à cette page', 'error');
+        setTimeout(() => {
+          window.location.href = 'auth-complete-system.html';
+        }, 2000);
+        return false;
       }
       
       // Récupérer le profile
@@ -264,6 +265,10 @@
       if (profile) {
         currentUser = profile;
         document.getElementById('currentUsername').textContent = profile.username;
+        return true;
+      } else {
+        showAlert('Profil introuvable', 'error');
+        return false;
       }
     }
     
@@ -315,7 +320,7 @@
             nom: nom,
             prenom: prenom,
             profession: profession || null,
-            ajoute_par_id: currentUser.id || null,
+            ajoute_par_id: currentUser.id,
             ajoute_par_username: currentUser.username,
             statut: 'neant' // Statut par défaut pour validation admin
           })
