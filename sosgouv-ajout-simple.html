@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proposer une personnalité - SOSGOUV</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .container {
+      max-width: 600px;
+      width: 100%;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    h1 {
+      color: #667eea;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    
+    .user-info {
+      background: #f8f9fa;
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 500;
+    }
+    
+    label .required {
+      color: #e74c3c;
+    }
+    
+    label .optional {
+      color: #999;
+      font-weight: normal;
+      font-size: 13px;
+    }
+    
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      transition: border-color 0.3s;
+    }
+    
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+    
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102,126,234,0.4);
+    }
+    
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #666;
+    }
+    
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    
+    .alert {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .alert-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .info-box {
+      background: #e7f3ff;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      margin-bottom: 25px;
+      border-radius: 5px;
+      font-size: 14px;
+      color: #555;
+    }
+    
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: white;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>📝 Proposer une personnalité</h1>
+      <p class="subtitle">Ajoutez une personnalité à la base de données SOSGOUV</p>
+      
+      <div class="user-info">
+        Connecté en tant que : <strong id="currentUsername"></strong>
+      </div>
+      
+      <div class="info-box">
+        💡 <strong>Conseil :</strong> Les informations que vous ajoutez seront ensuite enrichies par l'équipe SOSGOUV (biographie, liens, photo, etc.)
+      </div>
+      
+      <div id="alertContainer"></div>
+      
+      <form id="personnaliteForm">
+        <div class="form-group">
+          <label>
+            Nom <span class="required">*</span>
+          </label>
+          <input type="text" id="nom" required placeholder="Ex: Macron">
+        </div>
+        
+        <div class="form-group">
+          <label>
+            Prénom <span class="required">*</span>
+          </label>
+          <input type="text" id="prenom" required placeholder="Ex: Emmanuel">
+        </div>
+        
+        <div class="form-group">
+          <label>
+            Profession <span class="optional">(optionnel)</span>
+          </label>
+          <input type="text" id="profession" placeholder="Ex: Avocat, Entrepreneur, Médecin...">
+        </div>
+        
+        <div class="form-group">
+          <label>
+            Fonction <span class="optional">(optionnel)</span>
+          </label>
+          <input type="text" id="fonction" placeholder="Ex: Ministre de la Justice, Député...">
+        </div>
+        
+        <button type="submit" class="btn btn-primary">✓ Proposer cette personnalité</button>
+        <button type="button" class="btn btn-secondary" onclick="window.location.href='espace-personnel.html'">
+          Voir mes propositions
+        </button>
+      </form>
+    </div>
+    
+    <a href="auth-complete-system.html" class="back-link">← Retour à l'accueil</a>
+  </div>
+
+  <script>
+    // Configuration Supabase
+    const SUPABASE_URL = 'https://ubttetrqvvbcgvwjbylr.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    let currentUser = null;
+    
+    // Vérifier la session au chargement
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // Test user pour développement
+        const testUser = { username: 'TestUser' };
+        currentUser = testUser;
+        document.getElementById('currentUsername').textContent = testUser.username;
+        return;
+      }
+      
+      // Récupérer le profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (profile) {
+        currentUser = profile;
+        document.getElementById('currentUsername').textContent = profile.username;
+      }
+    }
+    
+    // Afficher une alerte
+    function showAlert(message, type = 'success') {
+      const alertContainer = document.getElementById('alertContainer');
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type}`;
+      alert.textContent = message;
+      alertContainer.appendChild(alert);
+      
+      setTimeout(() => {
+        alert.remove();
+      }, 5000);
+    }
+    
+    // Soumettre le formulaire
+    document.getElementById('personnaliteForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!currentUser) {
+        showAlert('Vous devez être connecté pour proposer une personnalité', 'error');
+        return;
+      }
+      
+      const nom = document.getElementById('nom').value.trim();
+      const prenom = document.getElementById('prenom').value.trim();
+      const profession = document.getElementById('profession').value.trim();
+      const fonction = document.getElementById('fonction').value.trim();
+      
+      try {
+        // 1. Vérifier si la personnalité existe déjà
+        const { data: existante } = await supabase
+          .from('personnalites')
+          .select('id, nom, prenom')
+          .ilike('nom', nom)
+          .ilike('prenom', prenom)
+          .single();
+        
+        if (existante) {
+          showAlert(`⚠️ ${prenom} ${nom} existe déjà dans la base de données`, 'error');
+          return;
+        }
+        
+        // 2. Insérer la personnalité
+        const { data: personnalite, error: persoError } = await supabase
+          .from('personnalites')
+          .insert({
+            nom: nom,
+            prenom: prenom,
+            profession: profession || null,
+            ajoute_par_id: currentUser.id || null,
+            ajoute_par_username: currentUser.username,
+            statut: 'neant' // Statut par défaut pour validation admin
+          })
+          .select()
+          .single();
+        
+        if (persoError) throw persoError;
+        
+        // 3. Ajouter la fonction si renseignée
+        if (fonction) {
+          await supabase
+            .from('personnalite_fonctions')
+            .insert({
+              personnalite_id: personnalite.id,
+              fonction: fonction,
+              propose_par_id: currentUser.id || null,
+              propose_par_username: currentUser.username,
+              nb_votes: 1
+            });
+        }
+        
+        // Succès !
+        showAlert(`✅ ${prenom} ${nom} a été proposé(e) avec succès !`);
+        
+        // Réinitialiser le formulaire
+        document.getElementById('personnaliteForm').reset();
+        
+      } catch (error) {
+        console.error('Erreur:', error);
+        showAlert('❌ Erreur lors de l\'ajout : ' + error.message, 'error');
+      }
+    });
+    
+    // Initialiser
+    checkSession();
+  </script>
+</body>
+</html>
