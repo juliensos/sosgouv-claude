@@ -314,6 +314,8 @@
         ❌ <strong>Accès refusé</strong><br>
         Cette page est réservée aux administrateurs.
       </div>
+      <div id="debugInfo" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; font-family: monospace; font-size: 12px; white-space: pre-wrap;"></div>
+      <a href="auth-complete-system.html" class="btn btn-secondary" style="margin-top: 15px; display: inline-block;">← Retour à l'authentification</a>
     </div>
     
     <div id="adminContent" class="hide">
@@ -468,25 +470,33 @@
     
     // Vérifier si admin
     async function checkAdmin() {
+      const debugEl = document.getElementById('debugInfo');
+      let debugText = '';
+      
+      function addDebug(msg) {
+        debugText += msg + '\n';
+        if (debugEl) debugEl.textContent = debugText;
+        console.log(msg);
+      }
+      
       try {
-        // Log pour debug
-        console.log('🔍 Vérification admin...');
+        addDebug('🔍 Vérification admin...');
         
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        console.log('Session:', session);
-        console.log('Session error:', sessionError);
+        addDebug(`Session error: ${sessionError || 'none'}`);
+        addDebug(`Session existe: ${!!session}`);
         
         if (!session) {
-          console.log('❌ Pas de session détectée');
+          addDebug('❌ PROBLÈME: Aucune session détectée');
+          addDebug('Vous devez être connecté via auth-complete-system.html d\'abord');
           document.getElementById('accessDenied').classList.remove('hide');
-          setTimeout(() => {
-            window.location.href = 'auth-complete-system.html';
-          }, 2000);
           return false;
         }
         
-        console.log('✅ Session trouvée:', session.user.email);
+        addDebug(`✅ Session trouvée`);
+        addDebug(`User ID: ${session.user.id}`);
+        addDebug(`User Email: ${session.user.email || 'none'}`);
         
         // Récupérer le profile
         const { data: profile, error: profileError } = await supabase
@@ -495,23 +505,31 @@
           .eq('id', session.user.id)
           .single();
         
-        console.log('Profile:', profile);
-        console.log('Profile error:', profileError);
+        addDebug(`Profile error: ${profileError?.message || 'none'}`);
+        addDebug(`Profile trouvé: ${!!profile}`);
+        
+        if (profile) {
+          addDebug(`Profile username: ${profile.username}`);
+          addDebug(`Profile email: ${profile.email || 'none'}`);
+        }
         
         // Vérifier si c'est l'admin (3 sources possibles)
-        const isAdmin = (
-          (profile && profile.email === ADMIN_EMAIL) ||           // Email dans profiles
-          (session.user.email === ADMIN_EMAIL) ||                 // Email Supabase Auth
-          (profile && profile.username === 'julienmailsosgouv')   // Username admin
-        );
+        const emailMatch = (profile && profile.email === ADMIN_EMAIL);
+        const sessionEmailMatch = (session.user.email === ADMIN_EMAIL);
+        const usernameMatch = (profile && profile.username === 'julienmailsosgouv');
         
-        console.log('Is Admin?', isAdmin);
-        console.log('Email profile:', profile?.email);
-        console.log('Email session:', session.user.email);
-        console.log('Username:', profile?.username);
+        addDebug(`\nVérification admin:`);
+        addDebug(`- Email dans profile = ${ADMIN_EMAIL}? ${emailMatch}`);
+        addDebug(`- Email session = ${ADMIN_EMAIL}? ${sessionEmailMatch}`);
+        addDebug(`- Username = julienmailsosgouv? ${usernameMatch}`);
+        
+        const isAdmin = emailMatch || sessionEmailMatch || usernameMatch;
+        
+        addDebug(`\n✅ RÉSULTAT: ${isAdmin ? 'ADMIN DÉTECTÉ' : 'PAS ADMIN'}`);
         
         if (isAdmin) {
           currentUser = profile || { id: session.user.id, username: session.user.email };
+          addDebug(`\n✅ CurrentUser défini: ${JSON.stringify(currentUser)}`);
           document.getElementById('currentUsername').textContent = profile?.username || session.user.email;
           document.getElementById('adminContent').classList.remove('hide');
           loadPersonnalites();
@@ -519,12 +537,11 @@
         }
         
         // Pas admin = accès refusé
-        console.log('❌ Pas admin');
         document.getElementById('accessDenied').classList.remove('hide');
         return false;
         
       } catch (error) {
-        console.error('Erreur checkAdmin:', error);
+        addDebug(`\n❌ ERREUR: ${error.message}`);
         document.getElementById('accessDenied').classList.remove('hide');
         return false;
       }
@@ -707,6 +724,15 @@
       const id = document.getElementById('personnaliteId').value;
       const isUpdate = !!id;
       
+      // DEBUG: Vérifier currentUser
+      console.log('🔍 DEBUG currentUser:', currentUser);
+      console.log('🔍 DEBUG currentUser.id:', currentUser?.id);
+      
+      if (!currentUser || !currentUser.id) {
+        showAlert('❌ Erreur: Utilisateur non identifié. Reconnectez-vous.', 'error');
+        return;
+      }
+      
       try {
         const persoData = {
           nom: document.getElementById('nom').value,
@@ -725,10 +751,15 @@
         
         if (isUpdate) {
           // Mise à jour
+          console.log('🔍 DEBUG mise à jour, ID:', id);
+          console.log('🔍 DEBUG données:', persoData);
+          
           const { error } = await supabase
             .from('personnalites')
             .update(persoData)
             .eq('id', id);
+          
+          console.log('🔍 DEBUG résultat update:', error);
           
           if (error) throw error;
           personnaliteId = id;
@@ -744,11 +775,15 @@
           persoData.ajoute_par_id = currentUser.id;
           persoData.ajoute_par_username = currentUser.username;
           
+          console.log('🔍 DEBUG données à insérer:', persoData);
+          
           const { data, error } = await supabase
             .from('personnalites')
             .insert(persoData)
             .select()
             .single();
+          
+          console.log('🔍 DEBUG résultat insertion:', { data, error });
           
           if (error) throw error;
           personnaliteId = data.id;

@@ -193,6 +193,12 @@
         💡 <strong>Conseil :</strong> Les informations que vous ajoutez seront ensuite enrichies par l'équipe SOSGOUV (biographie, liens, photo, etc.)
       </div>
       
+      <div id="notConnected" class="hide" style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <strong>⚠️ Non connecté</strong>
+        <div id="debugInfo" style="margin-top: 10px; padding: 10px; background: white; border-radius: 5px; font-family: monospace; font-size: 11px; white-space: pre-wrap; max-height: 200px; overflow-y: auto;"></div>
+        <a href="auth-complete-system.html" class="btn btn-primary" style="margin-top: 10px; display: inline-block;">← Retour à l'authentification</a>
+      </div>
+      
       <div id="alertContainer"></div>
       
       <form id="personnaliteForm">
@@ -336,7 +342,7 @@
             .insert({
               personnalite_id: personnalite.id,
               fonction: fonction,
-              propose_par_id: currentUser.id || null,
+              propose_par_id: currentUser.id,
               propose_par_username: currentUser.username,
               nb_votes: 1
             });
