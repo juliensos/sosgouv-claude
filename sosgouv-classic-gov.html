@@ -191,6 +191,14 @@
 
         .personality-search {
             position: relative;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .search-input-wrapper {
+            flex: 1;
+            position: relative;
         }
 
         .personality-search input {
@@ -199,6 +207,15 @@
             border: 2px solid #ddd;
             border-radius: 5px;
             font-size: 1em;
+        }
+
+        .personality-select {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            background: white;
         }
 
         .autocomplete-results {
@@ -699,12 +716,17 @@
 
                     <div class="personality-section">
                         <div class="personality-search">
-                            <input type="text" 
-                                   id="search-${index}" 
-                                   placeholder="🔍 Rechercher une personnalité..."
-                                   oninput="searchPersonality(${index})"
-                                   onfocus="searchPersonality(${index})">
-                            <div class="autocomplete-results" id="results-${index}"></div>
+                            <div class="search-input-wrapper">
+                                <input type="text" 
+                                       id="search-${index}" 
+                                       placeholder="🔍 Rechercher une personnalité..."
+                                       oninput="searchPersonality(${index})"
+                                       onfocus="searchPersonality(${index})">
+                                <div class="autocomplete-results" id="results-${index}"></div>
+                            </div>
+                            <select class="personality-select" id="select-${index}" onchange="selectFromDropdown(${index})">
+                                <option value="">-- Sélectionner par profession --</option>
+                            </select>
                         </div>
                         <button class="add-personality-btn" onclick="openAddPersonalityModal(${index})">
                             ➕ Ajouter une nouvelle personnalité
@@ -762,9 +784,15 @@
             const searchInput = document.getElementById(`search-${index}`);
             const resultsDiv = document.getElementById(`results-${index}`);
             const selectedDiv = document.getElementById(`selected-${index}`);
+            const selectElement = document.getElementById(`select-${index}`);
 
             searchInput.value = `${personality.firstname} ${personality.name}`;
             resultsDiv.classList.remove('show');
+            
+            // Synchroniser le select
+            if (selectElement) {
+                selectElement.value = personalityId;
+            }
             
             selectedDiv.innerHTML = `
                 <strong>✅ Sélectionné :</strong> ${personality.firstname} ${personality.name}
@@ -812,6 +840,7 @@
 
             personalities.push(data[0]);
             selectPersonality(currentPositionIndex, data[0].id);
+            populatePersonalitySelects(); // Repeupler les selects
             closeModal();
             alert('✅ Personnalité ajoutée avec succès !');
         }
@@ -825,6 +854,26 @@
             const subsectorsOptions = ALL_SUBSECTORS.map(item => 
                 `<option value="${item.sector}|${item.subsector}">${item.sector} - ${item.subsector}</option>`
             ).join('');
+
+            // Créer les options des personnalités groupées par profession
+            const groupedByProfession = {};
+            personalities.forEach(p => {
+                const profession = p.profession || 'Sans profession';
+                if (!groupedByProfession[profession]) {
+                    groupedByProfession[profession] = [];
+                }
+                groupedByProfession[profession].push(p);
+            });
+
+            const sortedProfessions = Object.keys(groupedByProfession).sort();
+            let personalityOptionsHTML = '<option value="">-- Sélectionner par profession --</option>';
+            sortedProfessions.forEach(profession => {
+                personalityOptionsHTML += `<optgroup label="${profession}">`;
+                groupedByProfession[profession].forEach(p => {
+                    personalityOptionsHTML += `<option value="${p.id}">${p.firstname} ${p.name}</option>`;
+                });
+                personalityOptionsHTML += '</optgroup>';
+            });
 
             const delegateCard = document.createElement('div');
             delegateCard.className = 'delegate-card';
@@ -852,12 +901,17 @@
                 <div class="form-group">
                     <label>Personnalité :</label>
                     <div class="personality-search">
-                        <input type="text" 
-                               id="delegate-search-${delegateId}" 
-                               placeholder="🔍 Rechercher une personnalité..."
-                               oninput="searchDelegatePersonality(${delegateId})"
-                               onfocus="searchDelegatePersonality(${delegateId})">
-                        <div class="autocomplete-results" id="delegate-results-${delegateId}"></div>
+                        <div class="search-input-wrapper">
+                            <input type="text" 
+                                   id="delegate-search-${delegateId}" 
+                                   placeholder="🔍 Rechercher une personnalité..."
+                                   oninput="searchDelegatePersonality(${delegateId})"
+                                   onfocus="searchDelegatePersonality(${delegateId})">
+                            <div class="autocomplete-results" id="delegate-results-${delegateId}"></div>
+                        </div>
+                        <select class="personality-select" id="delegate-select-${delegateId}" onchange="selectDelegateFromDropdown(${delegateId})">
+                            ${personalityOptionsHTML}
+                        </select>
                     </div>
                     <div class="selected-personality" id="delegate-selected-${delegateId}"></div>
                 </div>
@@ -901,15 +955,31 @@
             const searchInput = document.getElementById(`delegate-search-${delegateId}`);
             const resultsDiv = document.getElementById(`delegate-results-${delegateId}`);
             const selectedDiv = document.getElementById(`delegate-selected-${delegateId}`);
+            const selectElement = document.getElementById(`delegate-select-${delegateId}`);
 
             searchInput.value = `${personality.firstname} ${personality.name}`;
             searchInput.dataset.personalityId = personalityId;
             resultsDiv.classList.remove('show');
             
+            // Synchroniser le select
+            if (selectElement) {
+                selectElement.value = personalityId;
+            }
+            
             selectedDiv.innerHTML = `
                 <strong>✅ Sélectionné :</strong> ${personality.firstname} ${personality.name}
             `;
             selectedDiv.classList.add('show');
+        }
+
+        // Sélection depuis le menu déroulant pour délégué
+        function selectDelegateFromDropdown(delegateId) {
+            const select = document.getElementById(`delegate-select-${delegateId}`);
+            const personalityId = parseInt(select.value);
+            
+            if (personalityId) {
+                selectDelegatePersonality(delegateId, personalityId);
+            }
         }
 
         // Soumettre le gouvernement
