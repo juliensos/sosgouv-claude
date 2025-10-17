@@ -82,35 +82,6 @@
             resize: vertical;
         }
 
-        .rating-section {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .stars {
-            display: flex;
-            gap: 5px;
-        }
-
-        .star {
-            font-size: 2em;
-            cursor: pointer;
-            color: #ddd;
-            transition: color 0.2s;
-        }
-
-        .star:hover,
-        .star.active {
-            color: #ffa500;
-        }
-
-        .rating-value {
-            font-size: 1.2em;
-            color: #667eea;
-            font-weight: bold;
-        }
-
         .positions-grid {
             display: grid;
             gap: 20px;
@@ -446,20 +417,6 @@
             </div>
 
             <div class="form-group">
-                <label>⭐ Votre note (auto-évaluation) :</label>
-                <div class="rating-section">
-                    <div class="stars" id="ratingStars">
-                        <span class="star" data-rating="1">★</span>
-                        <span class="star" data-rating="2">★</span>
-                        <span class="star" data-rating="3">★</span>
-                        <span class="star" data-rating="4">★</span>
-                        <span class="star" data-rating="5">★</span>
-                    </div>
-                    <span class="rating-value" id="ratingValue">0/5</span>
-                </div>
-            </div>
-
-            <div class="form-group">
                 <label for="govComment">💬 Commentaire de l'auteur (votre vision) :</label>
                 <textarea id="govComment" placeholder="Expliquez votre vision, vos choix, vos priorités..."></textarea>
             </div>
@@ -632,7 +589,6 @@
 
         let personalities = [];
         let governmentData = {
-            rating: 0,
             positions: []
         };
         let currentPositionIndex = null;
@@ -641,33 +597,6 @@
         async function init() {
             await loadPersonalities();
             renderPositions();
-            populatePersonalitySelects(); // Remplir après chargement des personnalités
-            setupRating();
-        }
-
-        // Système de notation
-        function setupRating() {
-            const stars = document.querySelectorAll('.star');
-            stars.forEach(star => {
-                star.addEventListener('click', () => {
-                    const rating = parseInt(star.dataset.rating);
-                    governmentData.rating = rating;
-                    updateStars(rating);
-                });
-            });
-        }
-
-        function updateStars(rating) {
-            const stars = document.querySelectorAll('.star');
-            stars.forEach(star => {
-                const starRating = parseInt(star.dataset.rating);
-                if (starRating <= rating) {
-                    star.classList.add('active');
-                } else {
-                    star.classList.remove('active');
-                }
-            });
-            document.getElementById('ratingValue').textContent = `${rating}/5`;
         }
 
         // Charger les personnalités
@@ -677,7 +606,12 @@
                 .select('*')
                 .order('name');
             
-            if (data) personalities = data;
+            if (data) {
+                personalities = data;
+                console.log('Personnalités chargées:', personalities.length);
+            } else {
+                console.error('Erreur chargement personnalités:', error);
+            }
         }
 
         // Générer les cartes de postes
@@ -737,6 +671,11 @@
                 `;
                 container.appendChild(card);
             });
+
+            // Attendre que le DOM soit mis à jour puis remplir les selects
+            setTimeout(() => {
+                populatePersonalitySelects();
+            }, 100);
         }
 
         // Activer/désactiver l'édition de l'intitulé
@@ -988,15 +927,9 @@
         async function submitGovernment() {
             const govName = document.getElementById('govName').value;
             const govComment = document.getElementById('govComment').value;
-            const rating = governmentData.rating;
 
             if (!govName) {
                 alert('Veuillez donner un nom au gouvernement');
-                return;
-            }
-
-            if (rating === 0) {
-                alert('Veuillez noter votre gouvernement (1 à 5 étoiles)');
                 return;
             }
 
@@ -1041,7 +974,6 @@
             const governmentToSave = {
                 name: govName,
                 type: 'classique',
-                rating: rating,
                 comment: govComment,
                 positions: positions,
                 delegates: delegates
@@ -1051,7 +983,6 @@
 
             alert('✅ Gouvernement enregistré avec succès !\n\n' +
                   `Nom: ${govName}\n` +
-                  `Note: ${rating}/5\n` +
                   `Ministres: ${positions.length}\n` +
                   `Délégués: ${delegates.length}`);
         }
