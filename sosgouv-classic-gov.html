@@ -423,7 +423,7 @@
 <body>
     <div class="container">
         <div style="position: absolute; top: 10px; right: 10px; background: #667eea; color: white; padding: 5px 10px; border-radius: 5px; font-size: 0.8em; font-weight: bold;">
-            v2.6
+            v2.7
         </div>
         <button onclick="testMenus()" style="position: absolute; top: 45px; right: 10px; background: #ff6b6b; color: white; padding: 5px 10px; border-radius: 5px; font-size: 0.8em; border: none; cursor: pointer;">
             🔧 Test Menus
@@ -743,7 +743,7 @@
                                        onfocus="searchPersonality(${index})">
                                 <div class="autocomplete-results" id="results-${index}"></div>
                             </div>
-                            <select class="personality-select" id="select-${index}" onchange="selectFromDropdown(${index})">
+                            <select class="personality-select" id="select-${index}" onchange="selectFromDropdown(${index}); return false;">
                                 <option value="">-- Sélectionner par profession --</option>
                             </select>
                         </div>
@@ -806,10 +806,11 @@
             console.log('=== SELECT PERSONALITY ===');
             console.log('Index:', index, 'PersonalityId:', personalityId, 'Type:', typeof personalityId);
             
-            const personality = personalities.find(p => p.id == personalityId);
+            const personality = personalities.find(p => String(p.id) === String(personalityId));
             
             if (!personality) {
                 console.error('❌ Personnalité non trouvée avec id:', personalityId);
+                console.log('IDs disponibles:', personalities.map(p => p.id));
                 alert('Erreur : personnalité non trouvée');
                 return;
             }
@@ -821,25 +822,27 @@
             const selectedDiv = document.getElementById(`selected-${index}`);
             const selectElement = document.getElementById(`select-${index}`);
 
-            searchInput.value = `${personality.firstname} ${personality.name}`;
-            resultsDiv.classList.remove('show');
+            if (searchInput) searchInput.value = `${personality.firstname} ${personality.name}`;
+            if (resultsDiv) resultsDiv.classList.remove('show');
             
             // Synchroniser le select
             if (selectElement) {
                 selectElement.value = personalityId;
             }
             
-            selectedDiv.innerHTML = `
-                <strong>✅ Sélectionné :</strong> ${personality.firstname} ${personality.name}
-            `;
-            selectedDiv.classList.add('show');
+            if (selectedDiv) {
+                selectedDiv.innerHTML = `
+                    <strong>✅ Sélectionné :</strong> ${personality.firstname} ${personality.name}
+                `;
+                selectedDiv.classList.add('show');
+            }
 
             if (!governmentData.positions[index]) {
                 governmentData.positions[index] = {};
             }
             governmentData.positions[index].personalityId = personalityId;
             
-            console.log('Personnalité enregistrée dans governmentData');
+            console.log('✅ Personnalité enregistrée dans governmentData position', index);
         }
 
         // Ouvrir modal ajout personnalité
@@ -946,7 +949,7 @@
                                    onfocus="searchDelegatePersonality(${delegateId})">
                             <div class="autocomplete-results" id="delegate-results-${delegateId}"></div>
                         </div>
-                        <select class="personality-select" id="delegate-select-${delegateId}" onchange="selectDelegateFromDropdown(${delegateId})">
+                        <select class="personality-select" id="delegate-select-${delegateId}" onchange="selectDelegateFromDropdown('${delegateId}'); return false;">
                             ${personalityOptionsHTML}
                         </select>
                     </div>
@@ -996,7 +999,7 @@
             console.log('=== SELECT DELEGATE PERSONALITY ===');
             console.log('DelegateId:', delegateId, 'PersonalityId:', personalityId);
             
-            const personality = personalities.find(p => p.id == personalityId);
+            const personality = personalities.find(p => String(p.id) === String(personalityId));
             
             if (!personality) {
                 console.error('❌ Personnalité non trouvée avec id:', personalityId);
@@ -1011,34 +1014,55 @@
             const selectedDiv = document.getElementById(`delegate-selected-${delegateId}`);
             const selectElement = document.getElementById(`delegate-select-${delegateId}`);
 
-            searchInput.value = `${personality.firstname} ${personality.name}`;
-            searchInput.dataset.personalityId = personalityId;
-            resultsDiv.classList.remove('show');
+            if (searchInput) {
+                searchInput.value = `${personality.firstname} ${personality.name}`;
+                searchInput.dataset.personalityId = personalityId;
+            }
+            if (resultsDiv) resultsDiv.classList.remove('show');
             
             // Synchroniser le select
             if (selectElement) {
                 selectElement.value = personalityId;
             }
             
-            selectedDiv.innerHTML = `
-                <strong>✅ Sélectionné :</strong> ${personality.firstname} ${personality.name}
-            `;
-            selectedDiv.classList.add('show');
+            if (selectedDiv) {
+                selectedDiv.innerHTML = `
+                    <strong>✅ Sélectionné :</strong> ${personality.firstname} ${personality.name}
+                `;
+                selectedDiv.classList.add('show');
+            }
             
-            console.log('Personnalité enregistrée pour délégué');
+            console.log('✅ Personnalité enregistrée pour délégué');
         }
 
         // Sélection depuis le menu déroulant pour délégué
         function selectDelegateFromDropdown(delegateId) {
-            const select = document.getElementById(`delegate-select-${delegateId}`);
-            const personalityId = select.value; // Peut être un UUID string
+            console.log('=== SELECT DELEGATE FROM DROPDOWN ===');
+            console.log('DelegateId:', delegateId);
             
-            if (personalityId) {
-                // Trouver l'ID (nombre ou UUID)
-                const personality = personalities.find(p => p.id == personalityId);
-                if (personality) {
-                    selectDelegatePersonality(delegateId, personality.id);
-                }
+            const select = document.getElementById(`delegate-select-${delegateId}`);
+            if (!select) {
+                console.error('❌ Select délégué non trouvé pour id:', delegateId);
+                return;
+            }
+            
+            const personalityId = select.value;
+            console.log('PersonalityId sélectionné:', personalityId);
+            
+            if (!personalityId) {
+                console.log('Aucune personnalité sélectionnée (valeur vide)');
+                return;
+            }
+            
+            // Trouver la personnalité
+            const personality = personalities.find(p => String(p.id) === String(personalityId));
+            console.log('Personnalité trouvée:', personality);
+            
+            if (personality) {
+                console.log('✅ Appel de selectDelegatePersonality');
+                selectDelegatePersonality(delegateId, personality.id);
+            } else {
+                console.error('❌ Personnalité NON trouvée avec id:', personalityId);
             }
         }
 
