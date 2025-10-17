@@ -320,9 +320,12 @@
             text-align: center;
             padding-top: 30px;
             border-top: 3px solid #e0e0e0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
         }
 
-        .submit-btn {
+        .submit-btn, .draft-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
@@ -334,9 +337,21 @@
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
-        .submit-btn:hover {
+        .draft-btn {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        }
+
+        .submit-btn:hover, .draft-btn:hover {
             transform: translateY(-2px);
+        }
+
+        .submit-btn:hover {
             box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .draft-btn:hover {
+            box-shadow: 0 8px 20px rgba(108, 117, 125, 0.6);
         }
 
         .modal {
@@ -408,7 +423,7 @@
 <body>
     <div class="container">
         <div style="position: absolute; top: 10px; right: 10px; background: #667eea; color: white; padding: 5px 10px; border-radius: 5px; font-size: 0.8em; font-weight: bold;">
-            v2.5
+            v2.6
         </div>
         <button onclick="testMenus()" style="position: absolute; top: 45px; right: 10px; background: #ff6b6b; color: white; padding: 5px 10px; border-radius: 5px; font-size: 0.8em; border: none; cursor: pointer;">
             🔧 Test Menus
@@ -440,6 +455,7 @@
         </div>
 
         <div class="submit-section">
+            <button class="draft-btn" onclick="saveDraft()">💾 Sauvegarder en brouillon</button>
             <button class="submit-btn" onclick="submitGovernment()">✅ Publier le Gouvernement</button>
         </div>
     </div>
@@ -599,16 +615,6 @@
         };
         let currentPositionIndex = null;
 
-        // Initialisation
-        async function init() {
-            await loadPersonalities();
-            renderPositions();
-            // Attendre que le DOM soit prêt puis remplir les selects
-            setTimeout(() => {
-                populatePersonalitySelects();
-            }, 200);
-        }
-
         // Charger les personnalités
         async function loadPersonalities() {
             const { data, error } = await supabase
@@ -622,6 +628,74 @@
             } else {
                 console.error('Erreur chargement personnalités:', error);
             }
+        }
+
+        // Peupler tous les selects de personnalités groupés par profession
+        function populatePersonalitySelects() {
+            console.log('=== DEBUT REMPLISSAGE SELECTS ===');
+            console.log('Nombre de personnalités:', personalities.length);
+            
+            if (personalities.length === 0) {
+                console.error('❌ AUCUNE PERSONNALITE - Les selects resteront vides');
+                alert('⚠️ Aucune personnalité dans la base de données. Ajoutez-en d\'abord !');
+                return;
+            }
+
+            // Grouper les personnalités par profession
+            const groupedByProfession = {};
+            personalities.forEach(p => {
+                const profession = p.profession || 'Sans profession';
+                if (!groupedByProfession[profession]) {
+                    groupedByProfession[profession] = [];
+                }
+                groupedByProfession[profession].push(p);
+            });
+
+            console.log('Professions trouvées:', Object.keys(groupedByProfession));
+
+            // Trier les professions
+            const sortedProfessions = Object.keys(groupedByProfession).sort();
+
+            // Générer les options HTML
+            let optionsHTML = '<option value="">-- Sélectionner par profession --</option>';
+            sortedProfessions.forEach(profession => {
+                optionsHTML += `<optgroup label="${profession}">`;
+                groupedByProfession[profession].forEach(p => {
+                    optionsHTML += `<option value="${p.id}">${p.firstname} ${p.name}</option>`;
+                });
+                optionsHTML += '</optgroup>';
+            });
+
+            console.log('HTML généré, longueur:', optionsHTML.length);
+
+            // Appliquer aux selects des ministres
+            let selectsRemplis = 0;
+            let selectsNonTrouves = 0;
+            
+            CLASSIC_POSITIONS.forEach((pos, index) => {
+                const select = document.getElementById(`select-${index}`);
+                if (select) {
+                    select.innerHTML = optionsHTML;
+                    selectsRemplis++;
+                } else {
+                    selectsNonTrouves++;
+                    console.error(`❌ Select non trouvé pour index ${index}`);
+                }
+            });
+            
+            console.log(`✅ ${selectsRemplis} selects remplis`);
+            console.log(`❌ ${selectsNonTrouves} selects non trouvés`);
+            console.log('=== FIN REMPLISSAGE SELECTS ===');
+        }
+
+        // Initialisation
+        async function init() {
+            await loadPersonalities();
+            renderPositions();
+            // Attendre que le DOM soit prêt puis remplir les selects
+            setTimeout(() => {
+                populatePersonalitySelects();
+            }, 200);
         }
 
         // Générer les cartes de postes
@@ -966,6 +1040,67 @@
                     selectDelegatePersonality(delegateId, personality.id);
                 }
             }
+        }
+
+        // Sauvegarder en brouillon
+        async function saveDraft() {
+            const govName = document.getElementById('govName').value;
+            const govComment = document.getElementById('govComment').value;
+
+            if (!govName) {
+                alert('Veuillez donner un nom au gouvernement');
+                return;
+            }
+
+            // Récupérer toutes les données
+            const positions = [];
+            CLASSIC_POSITIONS.forEach((pos, index) => {
+                const customTitle = document.getElementById(`custom-${index}`).value;
+                const personalityId = governmentData.positions[index]?.personalityId;
+
+                if (personalityId) {
+                    positions.push({
+                        sector: pos.sector,
+                        title: pos.title,
+                        customTitle: customTitle,
+                        subsectors: pos.subsectors,
+                        personalityId: personalityId
+                    });
+                }
+            });
+
+            // Récupérer les délégués
+            const delegates = [];
+            document.querySelectorAll('.delegate-card').forEach(card => {
+                const delegateId = card.id.split('-')[1];
+                const sectorSelect = document.getElementById(`delegate-sector-${delegateId}`);
+                const sectorValue = sectorSelect?.value;
+                const title = document.getElementById(`delegate-title-${delegateId}`)?.value;
+                const searchInput = document.getElementById(`delegate-search-${delegateId}`);
+                const personalityId = searchInput?.dataset.personalityId;
+
+                if (sectorValue && title && personalityId) {
+                    const [sector, subsector] = sectorValue.split('|');
+                    delegates.push({ sector, subsector, title, personalityId });
+                }
+            });
+
+            const governmentToSave = {
+                name: govName,
+                type: 'classique',
+                status: 'brouillon',
+                comment: govComment,
+                positions: positions,
+                delegates: delegates
+            };
+
+            console.log('Brouillon à sauvegarder:', governmentToSave);
+
+            alert('💾 Brouillon sauvegardé avec succès !\n\n' +
+                  `Nom: ${govName}\n` +
+                  `Ministres: ${positions.length}\n` +
+                  `Délégués: ${delegates.length}\n\n` +
+                  `Vous pourrez le modifier et le publier plus tard.`);
         }
 
         // Soumettre le gouvernement
