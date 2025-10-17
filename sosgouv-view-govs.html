@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOS-GOUV - Visualiser les Gouvernements</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+
+        .version {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .filters-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            font-weight: bold;
+            font-size: 0.9em;
+            color: #333;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .governments-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .gov-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 25px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .gov-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .gov-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .gov-title {
+            font-size: 1.5em;
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .gov-type {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .type-classique {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .type-hybride {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .gov-meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .gov-comment {
+            color: #555;
+            font-style: italic;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .gov-positions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .position-pill {
+            background: #f0f4ff;
+            color: #667eea;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            border: 1px solid #d0d9ff;
+        }
+
+        .gov-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .btn-details {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-details:hover {
+            background: #5568d3;
+        }
+
+        .btn-vote {
+            background: #ffa500;
+            color: white;
+        }
+
+        .btn-vote:hover {
+            background: #ff8c00;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 900px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            margin: 20px;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px 15px 0 0;
+            position: relative;
+        }
+
+        .modal-title {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-modal:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .detail-section {
+            margin-bottom: 25px;
+        }
+
+        .detail-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .minister-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .minister-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .minister-role {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .delegate-badge {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="version">v1.0</div>
+        <h1>🏛️ Gouvernements Proposés</h1>
+        <p class="subtitle">Découvrez tous les gouvernements créés par la communauté</p>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalGovs">0</div>
+                <div class="stat-label">Gouvernements</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalClassique">0</div>
+                <div class="stat-label">Classiques</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalHybride">0</div>
+                <div class="stat-label">Hybrides</div>
+            </div>
+        </div>
+
+        <div class="filters-section">
+            <div class="filter-group">
+                <label>Type :</label>
+                <select id="filterType" onchange="applyFilters()">
+                    <option value="all">Tous</option>
+                    <option value="classique">Classique</option>
+                    <option value="hybride">Hybride</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Trier par :</label>
+                <select id="sortBy" onchange="applyFilters()">
+                    <option value="recent">Plus récents</option>
+                    <option value="oldest">Plus anciens</option>
+                    <option value="name">Nom (A-Z)</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Rechercher :</label>
+                <input type="text" id="searchGov" placeholder="Nom du gouvernement..." oninput="applyFilters()">
+            </div>
+        </div>
+
+        <div id="governmentsContainer">
+            <div class="loading">⏳ Chargement des gouvernements...</div>
+        </div>
+    </div>
+
+    <!-- Modal Détails -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="close-modal" onclick="closeModal()">×</button>
+                <div class="modal-title" id="modalTitle">Gouvernement</div>
+                <div id="modalMeta"></div>
+            </div>
+            <div class="modal-body" id="modalBody">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://ubttetrqvvbcgvwjbylr.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let allGovernments = [];
+        let personalities = [];
+
+        // Initialisation
+        async function init() {
+            await loadPersonalities();
+            await loadGovernments();
+        }
+
+        // Charger les personnalités
+        async function loadPersonalities() {
+            const { data, error } = await supabase
+                .from('personalities')
+                .select('*');
+            
+            if (data) {
+                personalities = data;
+                console.log('✅ Personnalités chargées:', personalities.length);
+            } else {
+                console.error('❌ Erreur personnalités:', error);
+            }
+        }
+
+        // Charger les gouvernements
+        async function loadGovernments() {
+            console.log('🔄 Chargement des gouvernements...');
+
+            // Pour le moment, on crée des données de test
+            // Plus tard on fera: const { data, error } = await supabase.from('governments').select('*');
+            
+            // DONNÉES DE TEST
+            allGovernments = [
+                {
+                    id: 1,
+                    name: 'Gouvernement de la République Exemplaire',
+                    type: 'classique',
+                    comment: 'Un gouvernement axé sur la transition écologique et la justice sociale.',
+                    created_at: '2025-10-15T10:30:00Z',
+                    positions: [
+                        { sector: 'Matignon', title: 'Premier ministre', personalityId: personalities[0]?.id },
+                        { sector: 'Intérieur', title: 'Ministre de l\'Intérieur', personalityId: personalities[1]?.id },
+                        { sector: 'Justice', title: 'Garde des Sceaux', personalityId: personalities[2]?.id },
+                    ],
+                    delegates: []
+                },
+                {
+                    id: 2,
+                    name: 'Gouvernement du Renouveau',
+                    type: 'classique',
+                    comment: 'Pour une France innovante et inclusive.',
+                    created_at: '2025-10-14T14:20:00Z',
+                    positions: [
+                        { sector: 'Matignon', title: 'Premier ministre', personalityId: personalities[1]?.id },
+                        { sector: 'Économie', title: 'Ministre de l\'Économie', personalityId: personalities[0]?.id },
+                    ],
+                    delegates: [
+                        { sector: 'Économie', subsector: 'Budget', title: 'en charge du budget', personalityId: personalities[2]?.id }
+                    ]
+                },
+                {
+                    id: 3,
+                    name: 'Gouvernement Hybride Citoyen',
+                    type: 'hybride',
+                    comment: 'Un gouvernement créé sur mesure pour répondre aux défis actuels.',
+                    created_at: '2025-10-13T09:15:00Z',
+                    positions: [
+                        { sector: 'Direction', title: 'Coordination générale', personalityId: personalities[0]?.id },
+                    ],
+                    delegates: []
+                }
+            ];
+
+            console.log('✅ Gouvernements chargés:', allGovernments.length);
+            updateStats();
+            applyFilters();
+        }
+
+        // Mettre à jour les statistiques
+        function updateStats() {
+            document.getElementById('totalGovs').textContent = allGovernments.length;
+            document.getElementById('totalClassique').textContent = allGovernments.filter(g => g.type === 'classique').length;
+            document.getElementById('totalHybride').textContent = allGovernments.filter(g => g.type === 'hybride').length;
+        }
+
+        // Appliquer les filtres
+        function applyFilters() {
+            const filterType = document.getElementById('filterType').value;
+            const sortBy = document.getElementById('sortBy').value;
+            const searchQuery = document.getElementById('searchGov').value.toLowerCase();
+
+            let filtered = [...allGovernments];
+
+            // Filtrer par type
+            if (filterType !== 'all') {
+                filtered = filtered.filter(g => g.type === filterType);
+            }
+
+            // Filtrer par recherche
+            if (searchQuery) {
+                filtered = filtered.filter(g => 
+                    g.name.toLowerCase().includes(searchQuery) ||
+                    (g.comment && g.comment.toLowerCase().includes(searchQuery))
+                );
+            }
+
+            // Trier
+            filtered.sort((a, b) => {
+                if (sortBy === 'recent') {
+                    return new Date(b.created_at) - new Date(a.created_at);
+                } else if (sortBy === 'oldest') {
+                    return new Date(a.created_at) - new Date(b.created_at);
+                } else if (sortBy === 'name') {
+                    return a.name.localeCompare(b.name);
+                }
+                return 0;
+            });
+
+            renderGovernments(filtered);
+        }
+
+        // Afficher les gouvernements
+        function renderGovernments(governments) {
+            const container = document.getElementById('governmentsContainer');
+
+            if (governments.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🏛️</div>
+                        <h2>Aucun gouvernement trouvé</h2>
+                        <p>Soyez le premier à créer un gouvernement !</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '<div class="governments-grid">' + governments.map(gov => {
+                const typeClass = gov.type === 'classique' ? 'type-classique' : 'type-hybride';
+                const date = new Date(gov.created_at).toLocaleDateString('fr-FR');
+                
+                return `
+                    <div class="gov-card" onclick="viewDetails(${gov.id})">
+                        <div class="gov-header">
+                            <div>
+                                <div class="gov-title">${gov.name}</div>
+                                <span class="gov-type ${typeClass}">${gov.type.toUpperCase()}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="gov-meta">
+                            <div class="meta-item">📅 ${date}</div>
+                            <div class="meta-item">👥 ${gov.positions.length} ministres</div>
+                            ${gov.delegates.length > 0 ? `<div class="meta-item">🎯 ${gov.delegates.length} délégués</div>` : ''}
+                        </div>
+
+                        ${gov.comment ? `<div class="gov-comment">"${gov.comment}"</div>` : ''}
+
+                        <div class="gov-positions">
+                            ${gov.positions.slice(0, 5).map(pos => {
+                                const pers = personalities.find(p => p.id === pos.personalityId);
+                                return `<div class="position-pill">${pers ? pers.firstname + ' ' + pers.name : 'N/A'} - ${pos.sector}</div>`;
+                            }).join('')}
+                            ${gov.positions.length > 5 ? `<div class="position-pill">+${gov.positions.length - 5} autres</div>` : ''}
+                        </div>
+
+                        <div class="gov-actions">
+                            <button class="btn btn-details" onclick="event.stopPropagation(); viewDetails(${gov.id})">
+                                👁️ Voir les détails
+                            </button>
+                            <button class="btn btn-vote" onclick="event.stopPropagation(); vote(${gov.id})">
+                                ⭐ Voter
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('') + '</div>';
+        }
+
+        // Voir les détails
+        function viewDetails(govId) {
+            const gov = allGovernments.find(g => g.id === govId);
+            if (!gov) return;
+
+            document.getElementById('modalTitle').textContent = gov.name;
+            
+            const date = new Date(gov.created_at).toLocaleDateString('fr-FR', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+
+            document.getElementById('modalMeta').innerHTML = `
+                <div style="display: flex; gap: 20px; margin-top: 10px; font-size: 0.9em;">
+                    <span>📅 ${date}</span>
+                    <span class="gov-type ${gov.type === 'classique' ? 'type-classique' : 'type-hybride'}">${gov.type.toUpperCase()}</span>
+                </div>
+            `;
+
+            let bodyHTML = '';
+
+            if (gov.comment) {
+                bodyHTML += `
+                    <div class="detail-section">
+                        <h3>💬 Vision de l'auteur</h3>
+                        <p style="color: #555; line-height: 1.6;">${gov.comment}</p>
+                    </div>
+                `;
+            }
+
+            bodyHTML += `
+                <div class="detail-section">
+                    <h3>👥 Composition du Gouvernement (${gov.positions.length})</h3>
+                    ${gov.positions.map(pos => {
+                        const pers = personalities.find(p => p.id === pos.personalityId);
+                        return `
+                            <div class="minister-card">
+                                <div class="minister-name">${pers ? pers.firstname + ' ' + pers.name : 'Personnalité inconnue'}</div>
+                                <div class="minister-role">
+                                    <strong>${pos.sector}</strong> - ${pos.title}
+                                    ${pos.customTitle ? `<br><em>En charge de : ${pos.customTitle}</em>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            if (gov.delegates && gov.delegates.length > 0) {
+                bodyHTML += `
+                    <div class="detail-section">
+                        <h3>🎯 Ministres Délégués (${gov.delegates.length})</h3>
+                        ${gov.delegates.map(del => {
+                            const pers = personalities.find(p => p.id === del.personalityId);
+                            return `
+                                <div class="minister-card">
+                                    <div class="minister-name">${pers ? pers.firstname + ' ' + pers.name : 'Personnalité inconnue'}</div>
+                                    <div class="minister-role">
+                                        Ministre délégué à <strong>${del.sector}</strong> (${del.subsector})
+                                        <br><em>En charge de : ${del.title}</em>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            }
+
+            document.getElementById('modalBody').innerHTML = bodyHTML;
+            document.getElementById('detailsModal').classList.add('show');
+        }
+
+        // Fermer la modal
+        function closeModal() {
+            document.getElementById('detailsModal').classList.remove('show');
+        }
+
+        // Voter
+        function vote(govId) {
+            alert('🗳️ Fonctionnalité de vote à venir ! Gouvernement ID: ' + govId);
+        }
+
+        // Fermer modal en cliquant en dehors
+        document.getElementById('detailsModal').addEventListener('click', (e) => {
+            if (e.target.id === 'detailsModal') {
+                closeModal();
+            }
+        });
+
+        // Démarrer l'application
+        init();
+    </script>
+</body>
+</html>
