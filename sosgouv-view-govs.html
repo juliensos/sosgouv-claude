@@ -40,6 +40,25 @@
             font-weight: bold;
         }
 
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .status-neant {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+
+        .status-pret {
+            background: #55efc4;
+            color: #00b894;
+        }
+
         h1 {
             color: #667eea;
             text-align: center;
@@ -159,6 +178,11 @@
         .type-hybride {
             background: #f3e5f5;
             color: #7b1fa2;
+        }
+
+        .type-cadavre {
+            background: #fff3e0;
+            color: #f57c00;
         }
 
         .gov-meta {
@@ -358,11 +382,105 @@
             font-size: 0.85em;
             margin-top: 5px;
         }
+
+        .key-ministers {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .key-minister-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .key-minister-item:last-child {
+            border-bottom: none;
+        }
+
+        .key-minister-role {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .key-minister-name {
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .vote-section {
+            background: #fff9e6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 2px solid #ffd93d;
+        }
+
+        .vote-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .rating-stars {
+            display: flex;
+            gap: 5px;
+        }
+
+        .rating-stars input[type="radio"] {
+            display: none;
+        }
+
+        .rating-stars label {
+            font-size: 2em;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .rating-stars input[type="radio"]:checked ~ label,
+        .rating-stars label:hover,
+        .rating-stars label:hover ~ label {
+            color: #ffa500;
+        }
+
+        .rating-stars {
+            flex-direction: row-reverse;
+            justify-content: flex-end;
+        }
+
+        .current-rating {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .rating-number {
+            font-weight: bold;
+            color: #ffa500;
+            font-size: 1.2em;
+        }
+
+        .total-likes {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="version">v1.0</div>
+        <div class="version">v2.0</div>
         <h1>🏛️ Gouvernements Proposés</h1>
         <p class="subtitle">Découvrez tous les gouvernements créés par la communauté</p>
 
@@ -379,6 +497,10 @@
                 <div class="stat-number" id="totalHybride">0</div>
                 <div class="stat-label">Hybrides</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalCadavre">0</div>
+                <div class="stat-label">Cadavre Exquis</div>
+            </div>
         </div>
 
         <div class="filters-section">
@@ -388,6 +510,16 @@
                     <option value="all">Tous</option>
                     <option value="classique">Classique</option>
                     <option value="hybride">Hybride</option>
+                    <option value="cadavre">Cadavre Exquis</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label>Statut :</label>
+                <select id="filterStatus" onchange="applyFilters()">
+                    <option value="all">Tous</option>
+                    <option value="pret">Prêt à gouverner</option>
+                    <option value="neant">En attente</option>
                 </select>
             </div>
 
@@ -397,6 +529,8 @@
                     <option value="recent">Plus récents</option>
                     <option value="oldest">Plus anciens</option>
                     <option value="name">Nom (A-Z)</option>
+                    <option value="rating">Mieux notés</option>
+                    <option value="likes">Plus de likes (membres)</option>
                 </select>
             </div>
 
@@ -450,27 +584,36 @@
             } else {
                 console.error('❌ Erreur personnalités:', error);
             }
+
+            // Ajouter des likes de test si les personnalités n'en ont pas
+            personalities.forEach(p => {
+                if (!p.nombre_likes) {
+                    p.nombre_likes = Math.floor(Math.random() * 100); // likes aléatoires pour test
+                }
+            });
         }
 
         // Charger les gouvernements
         async function loadGovernments() {
             console.log('🔄 Chargement des gouvernements...');
 
-            // Pour le moment, on crée des données de test
-            // Plus tard on fera: const { data, error } = await supabase.from('governments').select('*');
-            
-            // DONNÉES DE TEST
+            // DONNÉES DE TEST avec les nouveaux champs
             allGovernments = [
                 {
                     id: 1,
                     name: 'Gouvernement de la République Exemplaire',
                     type: 'classique',
+                    status: 'pret',
                     comment: 'Un gouvernement axé sur la transition écologique et la justice sociale.',
                     created_at: '2025-10-15T10:30:00Z',
+                    rating: 4.5,
+                    votes_count: 23,
                     positions: [
                         { sector: 'Matignon', title: 'Premier ministre', personalityId: personalities[0]?.id },
                         { sector: 'Intérieur', title: 'Ministre de l\'Intérieur', personalityId: personalities[1]?.id },
                         { sector: 'Justice', title: 'Garde des Sceaux', personalityId: personalities[2]?.id },
+                        { sector: 'Défense', title: 'Ministre des Armées', personalityId: personalities[0]?.id },
+                        { sector: 'Économie', title: 'Ministre de l\'Économie', personalityId: personalities[1]?.id },
                     ],
                     delegates: []
                 },
@@ -478,11 +621,17 @@
                     id: 2,
                     name: 'Gouvernement du Renouveau',
                     type: 'classique',
+                    status: 'neant',
                     comment: 'Pour une France innovante et inclusive.',
                     created_at: '2025-10-14T14:20:00Z',
+                    rating: 3.8,
+                    votes_count: 15,
                     positions: [
                         { sector: 'Matignon', title: 'Premier ministre', personalityId: personalities[1]?.id },
                         { sector: 'Économie', title: 'Ministre de l\'Économie', personalityId: personalities[0]?.id },
+                        { sector: 'Intérieur', title: 'Ministre de l\'Intérieur', personalityId: personalities[2]?.id },
+                        { sector: 'Justice', title: 'Garde des Sceaux', personalityId: personalities[1]?.id },
+                        { sector: 'Défense', title: 'Ministre des Armées', personalityId: personalities[0]?.id },
                     ],
                     delegates: [
                         { sector: 'Économie', subsector: 'Budget', title: 'en charge du budget', personalityId: personalities[2]?.id }
@@ -492,10 +641,32 @@
                     id: 3,
                     name: 'Gouvernement Hybride Citoyen',
                     type: 'hybride',
+                    status: 'pret',
                     comment: 'Un gouvernement créé sur mesure pour répondre aux défis actuels.',
                     created_at: '2025-10-13T09:15:00Z',
+                    rating: 4.2,
+                    votes_count: 18,
                     positions: [
                         { sector: 'Direction', title: 'Coordination générale', personalityId: personalities[0]?.id },
+                        { sector: 'Économie', title: 'Stratégie économique', personalityId: personalities[1]?.id },
+                    ],
+                    delegates: []
+                },
+                {
+                    id: 4,
+                    name: 'Gouvernement Cadavre Exquis #1',
+                    type: 'cadavre',
+                    status: 'pret',
+                    comment: 'Gouvernement automatique composé des personnalités les plus populaires.',
+                    created_at: '2025-10-12T08:00:00Z',
+                    rating: 4.7,
+                    votes_count: 31,
+                    positions: [
+                        { sector: 'Matignon', title: 'Premier ministre', personalityId: personalities[0]?.id },
+                        { sector: 'Intérieur', title: 'Ministre de l\'Intérieur', personalityId: personalities[1]?.id },
+                        { sector: 'Justice', title: 'Garde des Sceaux', personalityId: personalities[2]?.id },
+                        { sector: 'Défense', title: 'Ministre des Armées', personalityId: personalities[0]?.id },
+                        { sector: 'Économie', title: 'Ministre de l\'Économie', personalityId: personalities[1]?.id },
                     ],
                     delegates: []
                 }
@@ -511,11 +682,31 @@
             document.getElementById('totalGovs').textContent = allGovernments.length;
             document.getElementById('totalClassique').textContent = allGovernments.filter(g => g.type === 'classique').length;
             document.getElementById('totalHybride').textContent = allGovernments.filter(g => g.type === 'hybride').length;
+            document.getElementById('totalCadavre').textContent = allGovernments.filter(g => g.type === 'cadavre').length;
+        }
+
+        // Calculer le total des likes des personnalités d'un gouvernement
+        function calculateTotalLikes(gov) {
+            let total = 0;
+            gov.positions.forEach(pos => {
+                const pers = personalities.find(p => p.id === pos.personalityId);
+                if (pers && pers.nombre_likes) {
+                    total += pers.nombre_likes;
+                }
+            });
+            gov.delegates?.forEach(del => {
+                const pers = personalities.find(p => p.id === del.personalityId);
+                if (pers && pers.nombre_likes) {
+                    total += pers.nombre_likes;
+                }
+            });
+            return total;
         }
 
         // Appliquer les filtres
         function applyFilters() {
             const filterType = document.getElementById('filterType').value;
+            const filterStatus = document.getElementById('filterStatus').value;
             const sortBy = document.getElementById('sortBy').value;
             const searchQuery = document.getElementById('searchGov').value.toLowerCase();
 
@@ -524,6 +715,11 @@
             // Filtrer par type
             if (filterType !== 'all') {
                 filtered = filtered.filter(g => g.type === filterType);
+            }
+
+            // Filtrer par statut
+            if (filterStatus !== 'all') {
+                filtered = filtered.filter(g => g.status === filterStatus);
             }
 
             // Filtrer par recherche
@@ -542,6 +738,10 @@
                     return new Date(a.created_at) - new Date(b.created_at);
                 } else if (sortBy === 'name') {
                     return a.name.localeCompare(b.name);
+                } else if (sortBy === 'rating') {
+                    return (b.rating || 0) - (a.rating || 0);
+                } else if (sortBy === 'likes') {
+                    return calculateTotalLikes(b) - calculateTotalLikes(a);
                 }
                 return 0;
             });
@@ -565,8 +765,38 @@
             }
 
             container.innerHTML = '<div class="governments-grid">' + governments.map(gov => {
-                const typeClass = gov.type === 'classique' ? 'type-classique' : 'type-hybride';
+                const typeClass = gov.type === 'classique' ? 'type-classique' : 
+                                 gov.type === 'hybride' ? 'type-hybride' : 'type-cadavre';
+                const statusClass = gov.status === 'pret' ? 'status-pret' : 'status-neant';
+                const statusText = gov.status === 'pret' ? 'Prêt à gouverner' : 'En attente';
                 const date = new Date(gov.created_at).toLocaleDateString('fr-FR');
+                const totalLikes = calculateTotalLikes(gov);
+                
+                // Trouver les ministres clés
+                const keyMinistersData = [
+                    { key: 'Matignon', label: '1er Ministre' },
+                    { key: 'Intérieur', label: 'Intérieur' },
+                    { key: 'Défense', label: 'Défense' },
+                    { key: 'Justice', label: 'Justice' },
+                    { key: 'Économie', label: 'Économie' }
+                ];
+
+                let keyMinistersHTML = '<div class="key-ministers">';
+                keyMinistersData.forEach(km => {
+                    const pos = gov.positions.find(p => p.sector === km.key);
+                    if (pos) {
+                        const pers = personalities.find(p => p.id === pos.personalityId);
+                        if (pers) {
+                            keyMinistersHTML += `
+                                <div class="key-minister-item">
+                                    <span class="key-minister-role">${km.label}</span>
+                                    <span class="key-minister-name">${pers.firstname} ${pers.name}</span>
+                                </div>
+                            `;
+                        }
+                    }
+                });
+                keyMinistersHTML += '</div>';
                 
                 return `
                     <div class="gov-card" onclick="viewDetails(${gov.id})">
@@ -574,31 +804,45 @@
                             <div>
                                 <div class="gov-title">${gov.name}</div>
                                 <span class="gov-type ${typeClass}">${gov.type.toUpperCase()}</span>
+                                <span class="status-badge ${statusClass}">${statusText}</span>
                             </div>
                         </div>
                         
                         <div class="gov-meta">
                             <div class="meta-item">📅 ${date}</div>
                             <div class="meta-item">👥 ${gov.positions.length} ministres</div>
-                            ${gov.delegates.length > 0 ? `<div class="meta-item">🎯 ${gov.delegates.length} délégués</div>` : ''}
+                            ${gov.delegates && gov.delegates.length > 0 ? `<div class="meta-item">🎯 ${gov.delegates.length} délégués</div>` : ''}
+                            ${totalLikes > 0 ? `<div class="meta-item"><span class="total-likes">❤️ ${totalLikes} likes</span></div>` : ''}
                         </div>
 
                         ${gov.comment ? `<div class="gov-comment">"${gov.comment}"</div>` : ''}
 
-                        <div class="gov-positions">
-                            ${gov.positions.slice(0, 5).map(pos => {
-                                const pers = personalities.find(p => p.id === pos.personalityId);
-                                return `<div class="position-pill">${pers ? pers.firstname + ' ' + pers.name : 'N/A'} - ${pos.sector}</div>`;
-                            }).join('')}
-                            ${gov.positions.length > 5 ? `<div class="position-pill">+${gov.positions.length - 5} autres</div>` : ''}
+                        ${keyMinistersHTML}
+
+                        <div class="vote-section" onclick="event.stopPropagation();">
+                            <div class="vote-title">⭐ Votez pour ce gouvernement :</div>
+                            <div class="rating-stars" id="rating-${gov.id}">
+                                <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-5" value="5" onchange="submitVote(${gov.id}, 5)">
+                                <label for="vote-${gov.id}-5">★</label>
+                                <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-4" value="4" onchange="submitVote(${gov.id}, 4)">
+                                <label for="vote-${gov.id}-4">★</label>
+                                <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-3" value="3" onchange="submitVote(${gov.id}, 3)">
+                                <label for="vote-${gov.id}-3">★</label>
+                                <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-2" value="2" onchange="submitVote(${gov.id}, 2)">
+                                <label for="vote-${gov.id}-2">★</label>
+                                <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-1" value="1" onchange="submitVote(${gov.id}, 1)">
+                                <label for="vote-${gov.id}-1">★</label>
+                            </div>
+                            <div class="current-rating">
+                                <span>Note actuelle:</span>
+                                <span class="rating-number">${gov.rating ? gov.rating.toFixed(1) : '0.0'} / 5</span>
+                                <span>(${gov.votes_count || 0} votes)</span>
+                            </div>
                         </div>
 
                         <div class="gov-actions">
                             <button class="btn btn-details" onclick="event.stopPropagation(); viewDetails(${gov.id})">
-                                👁️ Voir les détails
-                            </button>
-                            <button class="btn btn-vote" onclick="event.stopPropagation(); vote(${gov.id})">
-                                ⭐ Voter
+                                👁️ Voir les détails complets
                             </button>
                         </div>
                     </div>
@@ -619,10 +863,19 @@
                 day: 'numeric' 
             });
 
+            const typeClass = gov.type === 'classique' ? 'type-classique' : 
+                             gov.type === 'hybride' ? 'type-hybride' : 'type-cadavre';
+            const statusClass = gov.status === 'pret' ? 'status-pret' : 'status-neant';
+            const statusText = gov.status === 'pret' ? 'Prêt à gouverner' : 'En attente';
+            const totalLikes = calculateTotalLikes(gov);
+
             document.getElementById('modalMeta').innerHTML = `
-                <div style="display: flex; gap: 20px; margin-top: 10px; font-size: 0.9em;">
+                <div style="display: flex; gap: 20px; margin-top: 10px; font-size: 0.9em; flex-wrap: wrap; align-items: center;">
                     <span>📅 ${date}</span>
-                    <span class="gov-type ${gov.type === 'classique' ? 'type-classique' : 'type-hybride'}">${gov.type.toUpperCase()}</span>
+                    <span class="gov-type ${typeClass}">${gov.type.toUpperCase()}</span>
+                    <span class="status-badge ${statusClass}">${statusText}</span>
+                    <span>⭐ ${gov.rating ? gov.rating.toFixed(1) : '0.0'}/5 (${gov.votes_count || 0} votes)</span>
+                    ${totalLikes > 0 ? `<span class="total-likes">❤️ ${totalLikes} likes cumulés</span>` : ''}
                 </div>
             `;
 
@@ -648,6 +901,7 @@
                                 <div class="minister-role">
                                     <strong>${pos.sector}</strong> - ${pos.title}
                                     ${pos.customTitle ? `<br><em>En charge de : ${pos.customTitle}</em>` : ''}
+                                    ${pers && pers.nombre_likes ? `<br><span class="total-likes" style="font-size: 0.85em;">❤️ ${pers.nombre_likes} likes</span>` : ''}
                                 </div>
                             </div>
                         `;
@@ -667,6 +921,7 @@
                                     <div class="minister-role">
                                         Ministre délégué à <strong>${del.sector}</strong> (${del.subsector})
                                         <br><em>En charge de : ${del.title}</em>
+                                        ${pers && pers.nombre_likes ? `<br><span class="total-likes" style="font-size: 0.85em;">❤️ ${pers.nombre_likes} likes</span>` : ''}
                                     </div>
                                 </div>
                             `;
@@ -685,8 +940,22 @@
         }
 
         // Voter
-        function vote(govId) {
-            alert('🗳️ Fonctionnalité de vote à venir ! Gouvernement ID: ' + govId);
+        function submitVote(govId, rating) {
+            console.log(`Vote soumis: Gouvernement ${govId}, note ${rating}`);
+            
+            // Trouver le gouvernement
+            const gov = allGovernments.find(g => g.id === govId);
+            if (!gov) return;
+            
+            // Mettre à jour la note (simulation)
+            const currentTotal = (gov.rating || 0) * (gov.votes_count || 0);
+            gov.votes_count = (gov.votes_count || 0) + 1;
+            gov.rating = (currentTotal + rating) / gov.votes_count;
+            
+            alert(`✅ Vote enregistré !\nVous avez donné ${rating}/5 étoiles au gouvernement "${gov.name}"`);
+            
+            // Rafraîchir l'affichage
+            applyFilters();
         }
 
         // Fermer modal en cliquant en dehors
