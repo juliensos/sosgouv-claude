@@ -641,6 +641,7 @@
         async function init() {
             await loadPersonalities();
             renderPositions();
+            populatePersonalitySelects(); // Remplir après chargement des personnalités
             setupRating();
         }
 
@@ -758,15 +759,15 @@
             const resultsDiv = document.getElementById(`results-${index}`);
             const query = searchInput.value.toLowerCase();
 
-            if (query.length < 2) {
+            if (query.length < 1) {
                 resultsDiv.classList.remove('show');
                 return;
             }
 
+            // Chercher uniquement au DÉBUT des noms et prénoms
             const filtered = personalities.filter(p => 
-                p.name.toLowerCase().includes(query) || 
-                p.firstname.toLowerCase().includes(query) ||
-                (p.profession && p.profession.toLowerCase().includes(query))
+                p.name.toLowerCase().startsWith(query) || 
+                p.firstname.toLowerCase().startsWith(query)
             );
 
             resultsDiv.innerHTML = filtered.map(p => `
@@ -930,14 +931,15 @@
             const resultsDiv = document.getElementById(`delegate-results-${delegateId}`);
             const query = searchInput.value.toLowerCase();
 
-            if (query.length < 2) {
+            if (query.length < 1) {
                 resultsDiv.classList.remove('show');
                 return;
             }
 
+            // Chercher uniquement au DÉBUT des noms et prénoms
             const filtered = personalities.filter(p => 
-                p.name.toLowerCase().includes(query) || 
-                p.firstname.toLowerCase().includes(query)
+                p.name.toLowerCase().startsWith(query) || 
+                p.firstname.toLowerCase().startsWith(query)
             );
 
             resultsDiv.innerHTML = filtered.map(p => `
