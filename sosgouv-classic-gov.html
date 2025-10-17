@@ -597,6 +597,10 @@
         async function init() {
             await loadPersonalities();
             renderPositions();
+            // Attendre que le DOM soit prêt puis remplir les selects
+            setTimeout(() => {
+                populatePersonalitySelects();
+            }, 200);
         }
 
         // Charger les personnalités
@@ -671,11 +675,6 @@
                 `;
                 container.appendChild(card);
             });
-
-            // Attendre que le DOM soit mis à jour puis remplir les selects
-            setTimeout(() => {
-                populatePersonalitySelects();
-            }, 100);
         }
 
         // Activer/désactiver l'édition de l'intitulé
@@ -916,10 +915,14 @@
         // Sélection depuis le menu déroulant pour délégué
         function selectDelegateFromDropdown(delegateId) {
             const select = document.getElementById(`delegate-select-${delegateId}`);
-            const personalityId = parseInt(select.value);
+            const personalityId = select.value; // Peut être un UUID string
             
             if (personalityId) {
-                selectDelegatePersonality(delegateId, personalityId);
+                // Trouver l'ID (nombre ou UUID)
+                const personality = personalities.find(p => p.id == personalityId);
+                if (personality) {
+                    selectDelegatePersonality(delegateId, personality.id);
+                }
             }
         }
 
