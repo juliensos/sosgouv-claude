@@ -423,11 +423,8 @@
 <body>
     <div class="container">
         <div style="position: absolute; top: 10px; right: 10px; background: #667eea; color: white; padding: 5px 10px; border-radius: 5px; font-size: 0.8em; font-weight: bold;">
-            v2.7
+            v2.8
         </div>
-        <button onclick="testMenus()" style="position: absolute; top: 45px; right: 10px; background: #ff6b6b; color: white; padding: 5px 10px; border-radius: 5px; font-size: 0.8em; border: none; cursor: pointer;">
-            🔧 Test Menus
-        </button>
         <h1>🏛️ Proposer un Gouvernement Classique</h1>
         <p class="subtitle">Composez votre gouvernement idéal avec les ministères traditionnels</p>
 
@@ -629,6 +626,299 @@
                 console.error('Erreur chargement personnalités:', error);
             }
         }
+
+        // Rendre les fonctions globales pour qu'elles soient accessibles depuis le HTML
+        window.toggleEdit = function(index) {
+            const input = document.getElementById(`custom-${index}`);
+            input.readOnly = !input.readOnly;
+            if (!input.readOnly) {
+                input.focus();
+                input.style.background = 'white';
+                input.style.borderColor = '#667eea';
+            } else {
+                input.style.background = '#f8f9fa';
+                input.style.borderColor = '#e0e0e0';
+            }
+        };
+
+        window.searchPersonality = function(index) {
+            const searchInput = document.getElementById(`search-${index}`);
+            const resultsDiv = document.getElementById(`results-${index}`);
+            const query = searchInput.value.toLowerCase();
+
+            if (query.length < 1) {
+                resultsDiv.classList.remove('show');
+                return;
+            }
+
+            const filtered = personalities.filter(p => 
+                p.name.toLowerCase().startsWith(query) || 
+                p.firstname.toLowerCase().startsWith(query)
+            );
+
+            if (filtered.length === 0) {
+                resultsDiv.innerHTML = '<div style="padding: 10px; color: #999;">Aucune personnalité trouvée</div>';
+            } else {
+                resultsDiv.innerHTML = filtered.map(p => `
+                    <div class="autocomplete-item" onclick="selectPersonality(${index}, '${p.id}')">
+                        <strong>${p.firstname} ${p.name}</strong>${p.profession ? ' - ' + p.profession : ''}
+                    </div>
+                `).join('');
+            }
+
+            resultsDiv.classList.add('show');
+        };
+
+        window.selectPersonality = function(index, personalityId) {
+            console.log('=== SELECT PERSONALITY ===');
+            console.log('Index:', index, 'PersonalityId:', personalityId);
+            
+            const personality = personalities.find(p => String(p.id) === String(personalityId));
+            
+            if (!personality) {
+                console.error('❌ Personnalité non trouvée');
+                return;
+            }
+            
+            console.log('✅ Personnalité:', personality.firstname, personality.name);
+            
+            const searchInput = document.getElementById(`search-${index}`);
+            const resultsDiv = document.getElementById(`results-${index}`);
+            const selectedDiv = document.getElementById(`selected-${index}`);
+            const selectElement = document.getElementById(`select-${index}`);
+
+            if (searchInput) searchInput.value = `${personality.firstname} ${personality.name}`;
+            if (resultsDiv) resultsDiv.classList.remove('show');
+            if (selectElement) selectElement.value = personalityId;
+            
+            if (selectedDiv) {
+                selectedDiv.innerHTML = `<strong>✅ Sélectionné :</strong> ${personality.firstname} ${personality.name}`;
+                selectedDiv.classList.add('show');
+            }
+
+            if (!governmentData.positions[index]) {
+                governmentData.positions[index] = {};
+            }
+            governmentData.positions[index].personalityId = personalityId;
+            console.log('✅ Enregistré position', index);
+        };
+
+        window.selectFromDropdown = function(index) {
+            console.log('=== SELECT FROM DROPDOWN ===');
+            const select = document.getElementById(`select-${index}`);
+            const personalityId = select?.value;
+            
+            if (personalityId) {
+                window.selectPersonality(index, personalityId);
+            }
+        };
+
+        window.openAddPersonalityModal = function(index) {
+            currentPositionIndex = index;
+            document.getElementById('addPersonalityModal').classList.add('show');
+        };
+
+        window.closeModal = function() {
+            document.getElementById('addPersonalityModal').classList.remove('show');
+            document.getElementById('newPersonName').value = '';
+            document.getElementById('newPersonFirstname').value = '';
+        };
+
+        window.saveNewPersonality = async function() {
+            const name = document.getElementById('newPersonName').value;
+            const firstname = document.getElementById('newPersonFirstname').value;
+
+            if (!name || !firstname) {
+                alert('Nom et prénom sont obligatoires');
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('personalities')
+                .insert([{ name, firstname, status: 'neant' }])
+                .select();
+
+            if (error) {
+                alert('Erreur : ' + error.message);
+                return;
+            }
+
+            personalities.push(data[0]);
+            window.closeModal();
+            window.selectPersonality(currentPositionIndex, data[0].id);
+            populatePersonalitySelects();
+            alert('✅ Personnalité ajoutée !');
+        };
+
+        window.addDelegate = function() {
+            const delegatesContainer = document.getElementById('delegatesContainer');
+            const delegateId = Date.now();
+
+            const subsectorsOptions = ALL_SUBSECTORS.map(item => 
+                `<option value="${item.sector}|${item.subsector}">${item.sector} - ${item.subsector}</option>`
+            ).join('');
+
+            const groupedByProfession = {};
+            personalities.forEach(p => {
+                const profession = p.profession || 'Sans profession';
+                if (!groupedByProfession[profession]) {
+                    groupedByProfession[profession] = [];
+                }
+                groupedByProfession[profession].push(p);
+            });
+
+            const sortedProfessions = Object.keys(groupedByProfession).sort();
+            let personalityOptionsHTML = '<option value="">-- Sélectionner --</option>';
+            sortedProfessions.forEach(profession => {
+                personalityOptionsHTML += `<optgroup label="${profession}">`;
+                groupedByProfession[profession].forEach(p => {
+                    personalityOptionsHTML += `<option value="${p.id}">${p.firstname} ${p.name}</option>`;
+                });
+                personalityOptionsHTML += '</optgroup>';
+            });
+
+            const delegateCard = document.createElement('div');
+            delegateCard.className = 'delegate-card';
+            delegateCard.id = `delegate-${delegateId}`;
+            delegateCard.innerHTML = `
+                <div class="delegate-header">
+                    <strong>Ministre délégué</strong>
+                    <button class="remove-btn" onclick="removeDelegate(${delegateId})">❌ Retirer</button>
+                </div>
+                <div class="form-group">
+                    <label>Rattachement :</label>
+                    <select id="delegate-sector-${delegateId}">
+                        <option value="">-- Sélectionner --</option>
+                        ${subsectorsOptions}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>En charge de :</label>
+                    <input type="text" id="delegate-title-${delegateId}" placeholder="Ex: la transition numérique">
+                </div>
+                <div class="form-group">
+                    <label>Personnalité :</label>
+                    <div class="personality-search">
+                        <div class="search-input-wrapper">
+                            <input type="text" id="delegate-search-${delegateId}" placeholder="🔍 Rechercher..." 
+                                   oninput="searchDelegatePersonality('${delegateId}')" 
+                                   onfocus="searchDelegatePersonality('${delegateId}')">
+                            <div class="autocomplete-results" id="delegate-results-${delegateId}"></div>
+                        </div>
+                        <select class="personality-select" id="delegate-select-${delegateId}" 
+                                onchange="selectDelegateFromDropdown('${delegateId}'); return false;">
+                            ${personalityOptionsHTML}
+                        </select>
+                    </div>
+                    <div class="selected-personality" id="delegate-selected-${delegateId}"></div>
+                </div>
+            `;
+            delegatesContainer.appendChild(delegateCard);
+        };
+
+        window.removeDelegate = function(delegateId) {
+            document.getElementById(`delegate-${delegateId}`)?.remove();
+        };
+
+        window.searchDelegatePersonality = function(delegateId) {
+            const searchInput = document.getElementById(`delegate-search-${delegateId}`);
+            const resultsDiv = document.getElementById(`delegate-results-${delegateId}`);
+            const query = searchInput?.value.toLowerCase() || '';
+
+            if (query.length < 1) {
+                resultsDiv?.classList.remove('show');
+                return;
+            }
+
+            const filtered = personalities.filter(p => 
+                p.name.toLowerCase().startsWith(query) || 
+                p.firstname.toLowerCase().startsWith(query)
+            );
+
+            if (filtered.length === 0) {
+                resultsDiv.innerHTML = '<div style="padding: 10px; color: #999;">Aucune personnalité trouvée</div>';
+            } else {
+                resultsDiv.innerHTML = filtered.map(p => `
+                    <div class="autocomplete-item" onclick="selectDelegatePersonality('${delegateId}', '${p.id}')">
+                        <strong>${p.firstname} ${p.name}</strong>${p.profession ? ' - ' + p.profession : ''}
+                    </div>
+                `).join('');
+            }
+
+            resultsDiv?.classList.add('show');
+        };
+
+        window.selectDelegatePersonality = function(delegateId, personalityId) {
+            console.log('=== SELECT DELEGATE ===');
+            const personality = personalities.find(p => String(p.id) === String(personalityId));
+            
+            if (!personality) {
+                console.error('❌ Personnalité non trouvée');
+                return;
+            }
+            
+            const searchInput = document.getElementById(`delegate-search-${delegateId}`);
+            const resultsDiv = document.getElementById(`delegate-results-${delegateId}`);
+            const selectedDiv = document.getElementById(`delegate-selected-${delegateId}`);
+            const selectElement = document.getElementById(`delegate-select-${delegateId}`);
+
+            if (searchInput) {
+                searchInput.value = `${personality.firstname} ${personality.name}`;
+                searchInput.dataset.personalityId = personalityId;
+            }
+            if (resultsDiv) resultsDiv.classList.remove('show');
+            if (selectElement) selectElement.value = personalityId;
+            
+            if (selectedDiv) {
+                selectedDiv.innerHTML = `<strong>✅ Sélectionné :</strong> ${personality.firstname} ${personality.name}`;
+                selectedDiv.classList.add('show');
+            }
+            
+            console.log('✅ Délégué enregistré');
+        };
+
+        window.selectDelegateFromDropdown = function(delegateId) {
+            const select = document.getElementById(`delegate-select-${delegateId}`);
+            const personalityId = select?.value;
+            
+            if (personalityId) {
+                window.selectDelegatePersonality(delegateId, personalityId);
+            }
+        };
+
+        window.saveDraft = async function() {
+            const govName = document.getElementById('govName').value;
+            if (!govName) {
+                alert('Veuillez donner un nom au gouvernement');
+                return;
+            }
+            alert('💾 Brouillon sauvegardé : ' + govName);
+        };
+
+        window.submitGovernment = async function() {
+            const govName = document.getElementById('govName').value;
+            if (!govName) {
+                alert('Veuillez donner un nom au gouvernement');
+                return;
+            }
+            
+            const positions = [];
+            CLASSIC_POSITIONS.forEach((pos, index) => {
+                if (governmentData.positions[index]?.personalityId) {
+                    positions.push({
+                        sector: pos.sector,
+                        personalityId: governmentData.positions[index].personalityId
+                    });
+                }
+            });
+            
+            if (positions.length === 0) {
+                alert('Veuillez sélectionner au moins un ministre');
+                return;
+            }
+            
+            alert(`✅ Gouvernement publié !\n${govName}\n${positions.length} ministres`);
+        };
 
         // Peupler tous les selects de personnalités groupés par profession
         function populatePersonalitySelects() {
