@@ -206,28 +206,13 @@
             line-height: 1.5;
         }
 
-        .gov-positions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 15px;
-        }
-
-        .position-pill {
-            background: #f0f4ff;
-            color: #667eea;
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 0.85em;
-            border: 1px solid #d0d9ff;
-        }
-
         .gov-actions {
             display: flex;
             gap: 10px;
             margin-top: 15px;
             padding-top: 15px;
             border-top: 1px solid #e0e0e0;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -249,13 +234,26 @@
             background: #5568d3;
         }
 
-        .btn-vote {
-            background: #ffa500;
+        .btn-pin {
+            background: #9b59b6;
             color: white;
         }
 
-        .btn-vote:hover {
-            background: #ff8c00;
+        .btn-pin:hover {
+            background: #8e44ad;
+        }
+
+        .btn-pin.pinned {
+            background: #27ae60;
+        }
+
+        .btn-share {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-share:hover {
+            background: #2980b9;
         }
 
         .loading {
@@ -373,16 +371,6 @@
             margin-top: 5px;
         }
 
-        .delegate-badge {
-            display: inline-block;
-            background: #e3f2fd;
-            color: #1976d2;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            margin-top: 5px;
-        }
-
         .key-ministers {
             background: #f8f9fa;
             padding: 15px;
@@ -429,6 +417,8 @@
         .rating-stars {
             display: flex;
             gap: 5px;
+            flex-direction: row-reverse;
+            justify-content: flex-end;
         }
 
         .rating-stars input[type="radio"] {
@@ -446,11 +436,6 @@
         .rating-stars label:hover,
         .rating-stars label:hover ~ label {
             color: #ffa500;
-        }
-
-        .rating-stars {
-            flex-direction: row-reverse;
-            justify-content: flex-end;
         }
 
         .current-rating {
@@ -480,7 +465,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="version">v2.0</div>
+        <div class="version">v3.0</div>
         <h1>🏛️ Gouvernements Proposés</h1>
         <p class="subtitle">Découvrez tous les gouvernements créés par la communauté</p>
 
@@ -515,12 +500,10 @@
             </div>
 
             <div class="filter-group">
-                <label>Statut :</label>
-                <select id="filterStatus" onchange="applyFilters()">
-                    <option value="all">Tous</option>
-                    <option value="pret">Prêt à gouverner</option>
-                    <option value="neant">En attente</option>
-                </select>
+                <label style="display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" id="filterPret" onchange="applyFilters()" style="width: auto;">
+                    Prêt à gouverner
+                </label>
             </div>
 
             <div class="filter-group">
@@ -530,6 +513,7 @@
                     <option value="oldest">Plus anciens</option>
                     <option value="name">Nom (A-Z)</option>
                     <option value="rating">Mieux notés</option>
+                    <option value="votes">Plus de votes</option>
                     <option value="likes">Plus de likes (membres)</option>
                 </select>
             </div>
@@ -565,6 +549,7 @@
 
         let allGovernments = [];
         let personalities = [];
+        let pinnedGovernments = JSON.parse(localStorage.getItem('pinnedGovs') || '[]');
 
         // Initialisation
         async function init() {
@@ -588,7 +573,7 @@
             // Ajouter des likes de test si les personnalités n'en ont pas
             personalities.forEach(p => {
                 if (!p.nombre_likes) {
-                    p.nombre_likes = Math.floor(Math.random() * 100); // likes aléatoires pour test
+                    p.nombre_likes = Math.floor(Math.random() * 100);
                 }
             });
         }
@@ -597,7 +582,7 @@
         async function loadGovernments() {
             console.log('🔄 Chargement des gouvernements...');
 
-            // DONNÉES DE TEST avec les nouveaux champs
+            // DONNÉES DE TEST
             allGovernments = [
                 {
                     id: 1,
@@ -633,9 +618,7 @@
                         { sector: 'Justice', title: 'Garde des Sceaux', personalityId: personalities[1]?.id },
                         { sector: 'Défense', title: 'Ministre des Armées', personalityId: personalities[0]?.id },
                     ],
-                    delegates: [
-                        { sector: 'Économie', subsector: 'Budget', title: 'en charge du budget', personalityId: personalities[2]?.id }
-                    ]
+                    delegates: []
                 },
                 {
                     id: 3,
@@ -706,23 +689,20 @@
         // Appliquer les filtres
         function applyFilters() {
             const filterType = document.getElementById('filterType').value;
-            const filterStatus = document.getElementById('filterStatus').value;
+            const filterPret = document.getElementById('filterPret').checked;
             const sortBy = document.getElementById('sortBy').value;
             const searchQuery = document.getElementById('searchGov').value.toLowerCase();
 
             let filtered = [...allGovernments];
 
-            // Filtrer par type
             if (filterType !== 'all') {
                 filtered = filtered.filter(g => g.type === filterType);
             }
 
-            // Filtrer par statut
-            if (filterStatus !== 'all') {
-                filtered = filtered.filter(g => g.status === filterStatus);
+            if (filterPret) {
+                filtered = filtered.filter(g => g.status === 'pret');
             }
 
-            // Filtrer par recherche
             if (searchQuery) {
                 filtered = filtered.filter(g => 
                     g.name.toLowerCase().includes(searchQuery) ||
@@ -730,7 +710,6 @@
                 );
             }
 
-            // Trier
             filtered.sort((a, b) => {
                 if (sortBy === 'recent') {
                     return new Date(b.created_at) - new Date(a.created_at);
@@ -740,6 +719,8 @@
                     return a.name.localeCompare(b.name);
                 } else if (sortBy === 'rating') {
                     return (b.rating || 0) - (a.rating || 0);
+                } else if (sortBy === 'votes') {
+                    return (b.votes_count || 0) - (a.votes_count || 0);
                 } else if (sortBy === 'likes') {
                     return calculateTotalLikes(b) - calculateTotalLikes(a);
                 }
@@ -771,8 +752,10 @@
                 const statusText = gov.status === 'pret' ? 'Prêt à gouverner' : 'En attente';
                 const date = new Date(gov.created_at).toLocaleDateString('fr-FR');
                 const totalLikes = calculateTotalLikes(gov);
+                const isPinned = pinnedGovernments.includes(gov.id);
+                const pinBtnClass = isPinned ? 'btn-pin pinned' : 'btn-pin';
+                const pinBtnText = isPinned ? '✅ Épinglé' : '📌 Épingler';
                 
-                // Trouver les ministres clés
                 const keyMinistersData = [
                     { key: 'Matignon', label: '1er Ministre' },
                     { key: 'Intérieur', label: 'Intérieur' },
@@ -842,7 +825,13 @@
 
                         <div class="gov-actions">
                             <button class="btn btn-details" onclick="event.stopPropagation(); viewDetails(${gov.id})">
-                                👁️ Voir les détails complets
+                                👁️ Détails
+                            </button>
+                            <button class="btn ${pinBtnClass}" id="pin-${gov.id}" onclick="event.stopPropagation(); togglePin(${gov.id})">
+                                ${pinBtnText}
+                            </button>
+                            <button class="btn btn-share" onclick="event.stopPropagation(); shareByEmail(${gov.id})">
+                                📧 Envoyer
                             </button>
                         </div>
                     </div>
@@ -941,21 +930,62 @@
 
         // Voter
         function submitVote(govId, rating) {
-            console.log(`Vote soumis: Gouvernement ${govId}, note ${rating}`);
-            
-            // Trouver le gouvernement
             const gov = allGovernments.find(g => g.id === govId);
             if (!gov) return;
             
-            // Mettre à jour la note (simulation)
             const currentTotal = (gov.rating || 0) * (gov.votes_count || 0);
             gov.votes_count = (gov.votes_count || 0) + 1;
             gov.rating = (currentTotal + rating) / gov.votes_count;
             
-            alert(`✅ Vote enregistré !\nVous avez donné ${rating}/5 étoiles au gouvernement "${gov.name}"`);
-            
-            // Rafraîchir l'affichage
+            alert(`✅ Vote enregistré !\nVous avez donné ${rating}/5 étoiles`);
             applyFilters();
+        }
+
+        // Épingler/Désépingler
+        function togglePin(govId) {
+            const index = pinnedGovernments.indexOf(govId);
+            const btn = document.getElementById(`pin-${govId}`);
+            
+            if (index > -1) {
+                pinnedGovernments.splice(index, 1);
+                btn.classList.remove('pinned');
+                btn.innerHTML = '📌 Épingler';
+                alert('📌 Gouvernement retiré de vos épinglés');
+            } else {
+                pinnedGovernments.push(govId);
+                btn.classList.add('pinned');
+                btn.innerHTML = '✅ Épinglé';
+                alert('✅ Épinglé !');
+            }
+            
+            localStorage.setItem('pinnedGovs', JSON.stringify(pinnedGovernments));
+        }
+
+        // Partager par email
+        function shareByEmail(govId) {
+            const gov = allGovernments.find(g => g.id === govId);
+            if (!gov) return;
+            
+            const email = prompt('📧 Entrez l\'adresse email :');
+            if (!email) return;
+            
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('❌ Email invalide');
+                return;
+            }
+            
+            const govUrl = `${window.location.origin}${window.location.pathname}?gov=${gov.id}`;
+            const subject = encodeURIComponent(`Découvrez "${gov.name}"`);
+            const body = encodeURIComponent(
+                `Bonjour,\n\nDécouvrez ce gouvernement sur SOS-GOUV :\n\n` +
+                `"${gov.name}"\n` +
+                `${gov.comment ? `\n${gov.comment}\n` : ''}` +
+                `\n${govUrl}\n\nCordialement`
+            );
+            
+            window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+            alert('✅ Email préparé !');
         }
 
         // Fermer modal en cliquant en dehors
@@ -965,7 +995,6 @@
             }
         });
 
-        // Démarrer l'application
         init();
     </script>
 </body>
