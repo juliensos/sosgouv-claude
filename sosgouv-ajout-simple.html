@@ -244,41 +244,62 @@
     
     // Vérifier la session au chargement
     async function checkSession() {
+      const debugEl = document.getElementById('debugInfo');
+      const notConnectedEl = document.getElementById('notConnected');
+      let debugText = '';
+      
+      function addDebug(msg) {
+        debugText += msg + '\n';
+        if (debugEl) debugEl.textContent = debugText;
+        console.log(msg);
+      }
+      
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        addDebug('🔍 Vérification de la session...');
+        
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        addDebug(`Session error: ${sessionError || 'none'}`);
+        addDebug(`Session existe: ${!!session}`);
         
         if (!session) {
-          showAlert('Vous devez être connecté pour proposer une personnalité. Redirection...', 'error');
-          setTimeout(() => {
-            window.location.href = 'auth-complete-system.html';
-          }, 2000);
+          addDebug('❌ PROBLÈME: Aucune session détectée');
+          addDebug('Vous devez être connecté via auth-complete-system.html d\'abord');
+          notConnectedEl?.classList.remove('hide');
           return false;
         }
         
+        addDebug(`✅ Session trouvée`);
+        addDebug(`User ID: ${session.user.id}`);
+        addDebug(`User Email: ${session.user.email || 'none'}`);
+        
         // Récupérer le profile
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
           .single();
         
+        addDebug(`Profile error: ${profileError?.message || 'none'}`);
+        
         if (profile) {
+          addDebug(`✅ Profile trouvé: ${profile.username}`);
           currentUser = profile;
           document.getElementById('currentUsername').textContent = profile.username;
+          // Cacher VRAIMENT le message "non connecté"
+          if (notConnectedEl) {
+            notConnectedEl.style.display = 'none';
+            notConnectedEl.classList.add('hide');
+          }
           return true;
         } else {
-          showAlert('Profil introuvable. Redirection...', 'error');
-          setTimeout(() => {
-            window.location.href = 'auth-complete-system.html';
-          }, 2000);
+          addDebug('❌ Profil introuvable dans la base');
+          notConnectedEl?.classList.remove('hide');
           return false;
         }
       } catch (error) {
-        console.error('Erreur:', error);
-        showAlert('Erreur de connexion. Redirection...', 'error');
-        setTimeout(() => {
-          window.location.href = 'auth-complete-system.html';
-        }, 2000);
+        addDebug(`❌ ERREUR: ${error.message}`);
+        notConnectedEl?.classList.remove('hide');
         return false;
       }
     }
