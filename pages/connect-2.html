@@ -1,4 +1,4 @@
-<!-- Page de création de compte uniquement - V-1 -->
+<!-- Page de création de compte V-4 - Bug OAuth Gmail CORRIGÉ -->
 
 <div class="page compte">
   <div class="div-block-232">
@@ -77,7 +77,7 @@
 
 <!-- Badge de version -->
 <div style="position: fixed; bottom: 20px; left: 20px; background: #aca69a; color: white; padding: 5px 10px; border-radius: 3px; font-size: 10px; font-weight: 700; z-index: 9999;">
-  V-1
+  V-4
 </div>
 
 <!-- Supabase Auth -->
@@ -236,7 +236,7 @@ setTimeout(function() {
         }
     };
 
-    // CRÉATION COMPTE AVEC GMAIL
+    // CRÉATION COMPTE AVEC GMAIL (V-4 CORRIGÉ)
     window.handleGmailSignup = async function() {
         const username = document.getElementById('gmailUsername').value.trim();
 
@@ -259,10 +259,11 @@ setTimeout(function() {
 
             // Stocker le username temporairement pour l'utiliser après OAuth
             localStorage.setItem('pending_username', username);
+            console.log('💾 Username sauvegardé:', username);
 
             // Lancer l'authentification Google
-            const redirectUrl = window.location.href.split('?')[0].split('#')[0] + '#connect-2';
-
+            const redirectUrl = window.location.origin + window.location.pathname + '#connect-2';
+            console.log('🔗 Redirect URL:', redirectUrl);
             
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
@@ -279,30 +280,62 @@ setTimeout(function() {
         }
     };
 
-    // Gestion du retour OAuth
+    // Gestion du retour OAuth (V-4 CORRIGÉ)
     async function handleGoogleCallback() {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log('🔍 Vérification callback OAuth...');
+        
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+            console.error('Erreur session:', sessionError);
+            return;
+        }
         
         if (session) {
+            console.log('✅ Session OAuth détectée');
             const user = session.user;
             const pendingUsername = localStorage.getItem('pending_username');
             
-            const { data: existing } = await supabase
+            console.log('📧 Email:', user.email);
+            console.log('💾 Pending username:', pendingUsername);
+            
+            // Vérifier si le compte existe déjà
+            const { data: existing, error: existingError } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('email', user.email)
                 .single();
 
+            if (existingError && existingError.code !== 'PGRST116') {
+                console.error('Erreur vérification existing:', existingError);
+            }
+
             if (!existing && pendingUsername) {
-                // Créer le profil
-                await supabase
+                console.log('🆕 Création du profil...');
+                
+                // Créer le profil avec GESTION D'ERREUR
+                const { data: newProfile, error: insertError } = await supabase
                     .from('profiles')
                     .insert([{
                         id: user.id,
                         username: pendingUsername,
                         email: user.email,
                         auth_method: 'google'
-                    }]);
+                    }])
+                    .select()
+                    .single();
+
+                if (insertError) {
+                    console.error('❌ ERREUR INSERTION:', insertError);
+                    window.showError('gmailError', 'Erreur lors de la création du compte: ' + insertError.message);
+                    
+                    // Nettoyer
+                    await supabase.auth.signOut();
+                    localStorage.removeItem('pending_username');
+                    return;
+                }
+
+                console.log('✅ Profil créé:', newProfile);
 
                 const currentUser = {
                     id: user.id,
@@ -315,6 +348,8 @@ setTimeout(function() {
                 localStorage.setItem('sosgouv_user', JSON.stringify(currentUser));
                 localStorage.removeItem('pending_username');
                 
+                console.log('💾 Utilisateur stocké dans localStorage');
+                
                 window.showSuccess('Compte créé avec succès !');
                 
                 // Rediriger vers l'accueil
@@ -324,6 +359,7 @@ setTimeout(function() {
                     }, 1000);
                 }
             } else if (existing) {
+                console.log('ℹ️ Compte déjà existant');
                 window.showError('gmailError', 'Ce compte existe déjà. Connectez-vous !');
                 localStorage.removeItem('pending_username');
                 setTimeout(() => {
@@ -331,13 +367,19 @@ setTimeout(function() {
                         window.router.navigateTo('connect-1');
                     }
                 }, 2000);
+            } else {
+                console.log('⚠️ Pas de pending username');
+                window.showError('gmailError', 'Erreur: nom d\'utilisateur manquant');
             }
+        } else {
+            console.log('ℹ️ Pas de session OAuth');
         }
     }
 
+    // Exécuter le callback immédiatement
     handleGoogleCallback();
 
-    console.log('✅ Page connect-2 V-1 chargée');
+    console.log('✅ Page connect-2 V-4 chargée');
 
 }, 500);
 </script>
