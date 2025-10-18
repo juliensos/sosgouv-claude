@@ -55,10 +55,20 @@
           <div class="fontello-icon-menu">☰</div>
         </div>
         <nav class="dropdown-list-menu w-dropdown-list">
-          <div class="drop-bloc-compte">
-            <a href="#connect" data-page="connect" class="_w-dropdown-link">Créer un compte</a>
-            <a href="#connect" data-page="connect" class="_w-dropdown-link">Se connecter</a>
+          
+          <!-- Menu NON connecté -->
+          <div id="menuNotConnected" class="drop-bloc-compte">
+            <a href="#connect-2" data-page="connect-2" class="_w-dropdown-link">Créer un compte</a>
+            <a href="#connect-1" data-page="connect-1" class="_w-dropdown-link">Se connecter</a>
           </div>
+          
+          <!-- Menu CONNECTÉ -->
+          <div id="menuConnected" class="drop-bloc-compte" style="display: none;">
+            <a href="#mon-espace" data-page="mon-espace" class="_w-dropdown-link">Mon espace</a>
+            <a href="#reglages" data-page="reglages" class="_w-dropdown-link">Réglages utilisateurs</a>
+            <a href="#" onclick="handleLogout()" class="_w-dropdown-link">Me déconnecter</a>
+          </div>
+          
           <div class="drop-bloc-compte">
             <a href="#faq" data-page="faq" class="_w-dropdown-link">FAQ</a>
             <a href="#apropos" data-page="apropos" class="_w-dropdown-link">A propos</a>
@@ -76,7 +86,7 @@
     <div class="w-layout-blockcontainer n-footer w-container">
       <div class="admin-bloc _0">
         <div class="test-version">espace admin</div>
-        <div class="test-version">V-1</div>
+        <div class="test-version">V-2</div>
       </div>
       <div class="admin-bloc">
         <a href="#personnalites" data-page="personnalites">liste personnalités</a>
@@ -91,6 +101,50 @@
   <script src="https://cdn.prod.website-files.com/68ecfda4d9b3270b98426ff5/js/webflow.schunk.50d850aa4962b686.js" type="text/javascript"></script>
   <script src="https://cdn.prod.website-files.com/68ecfda4d9b3270b98426ff5/js/webflow.schunk.0a46a3eef4d87fb7.js" type="text/javascript"></script>
   <script src="https://cdn.prod.website-files.com/68ecfda4d9b3270b98426ff5/js/webflow.45db7ba0.f8aeaa00459718de.js" type="text/javascript"></script>
+  
+  <!-- Auth Menu Manager -->
+  <script>
+    // Gestion du menu dynamique selon connexion
+    function updateMenu() {
+      const user = localStorage.getItem('sosgouv_user');
+      const menuNotConnected = document.getElementById('menuNotConnected');
+      const menuConnected = document.getElementById('menuConnected');
+      
+      if (user) {
+        // Utilisateur connecté
+        menuNotConnected.style.display = 'none';
+        menuConnected.style.display = 'block';
+        console.log('✅ Utilisateur connecté');
+      } else {
+        // Utilisateur non connecté
+        menuNotConnected.style.display = 'block';
+        menuConnected.style.display = 'none';
+        console.log('❌ Utilisateur non connecté');
+      }
+    }
+    
+    // Déconnexion
+    window.handleLogout = function() {
+      localStorage.removeItem('sosgouv_user');
+      updateMenu();
+      
+      // Rediriger vers accueil
+      if (window.router) {
+        window.router.navigateTo('accueil');
+      }
+      
+      alert('✅ Déconnexion réussie !');
+    };
+    
+    // Mettre à jour le menu au chargement
+    updateMenu();
+    
+    // Mettre à jour le menu quand on change de page
+    window.addEventListener('popstate', updateMenu);
+    
+    // Vérifier périodiquement si l'utilisateur s'est connecté
+    setInterval(updateMenu, 1000);
+  </script>
   
   <!-- Router SOSGOUV -->
   <script src="router.js"></script>
