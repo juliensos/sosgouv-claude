@@ -1,0 +1,188 @@
+<!-- Page de connexion uniquement - V-1 -->
+
+<div class="page compte">
+  <!-- CONNEXION -->
+  <div class="_w-connect-bloc">
+    <h3>Me connecter</h3>
+    <form id="loginForm" class="user-pass" onsubmit="return false;">
+      <div class="_w-text-area">
+        <input type="text" id="loginUsername" placeholder="Nom d'utilisateur" 
+               style="width: 100%; padding: 8px; border: 1px solid #aca69a; border-radius: 5px;">
+      </div>
+      <div class="_w-text-area">
+        <input type="password" id="loginPassword" placeholder="Mot de passe" 
+               style="width: 100%; padding: 8px; border: 1px solid #aca69a; border-radius: 5px;">
+      </div>
+      <div id="loginError" style="color: #b81515; font-size: 12px; margin-top: 10px; display: none;"></div>
+    </form>
+    <div class="bg-bout">
+      <button onclick="handleLogin()" class="_w-button red w-button">Me connecter</button>
+      <div class="div-block-230">
+        <div class="_w-courant">Ou</div>
+      </div>
+      <button onclick="handleGoogleLogin()" class="_w-button red w-button">Me connecter avec Gmail</button>
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px;">
+      <div class="_w-courant" style="color: #aca69a; font-size: 12px;">
+        Pas encore de compte ? 
+        <a href="#connect-2" data-page="connect-2" style="color: #973347; text-decoration: underline;">Créer un compte</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Badge de version -->
+<div style="position: fixed; bottom: 20px; left: 20px; background: #aca69a; color: white; padding: 5px 10px; border-radius: 3px; font-size: 10px; font-weight: 700; z-index: 9999;">
+  V-1
+</div>
+
+<!-- Supabase Auth -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// Attendre que le script Supabase soit complètement chargé
+setTimeout(function() {
+    
+    if (typeof window.supabase === 'undefined') {
+        console.error('❌ Supabase non chargé !');
+        alert('Erreur : Impossible de charger le système d\'authentification');
+        return;
+    }
+
+    console.log('✅ Supabase chargé');
+
+    const SUPABASE_URL = 'https://ubttetrqvvbcgvwjbylr.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let currentUser = null;
+
+    window.showError = function(elementId, message) {
+        const el = document.getElementById(elementId);
+        el.textContent = message;
+        el.style.display = 'block';
+        setTimeout(() => {
+            el.style.display = 'none';
+        }, 5000);
+    };
+
+    window.showSuccess = function(message) {
+        alert('✅ ' + message);
+    };
+
+    async function hashPassword(password) {
+        const msgBuffer = new TextEncoder().encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // CONNEXION STANDARD
+    window.handleLogin = async function() {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+
+        if (!username || !password) {
+            window.showError('loginError', 'Veuillez remplir tous les champs');
+            return;
+        }
+
+        try {
+            const hashedPassword = await hashPassword(password);
+
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('username', username)
+                .eq('password', hashedPassword)
+                .single();
+
+            if (error || !data) {
+                window.showError('loginError', '❌ Identifiants incorrects !');
+                return;
+            }
+
+            currentUser = data;
+            window.showSuccess('Connexion réussie !');
+            
+            // Stocker la session
+            localStorage.setItem('sosgouv_user', JSON.stringify(currentUser));
+            
+            // Rediriger vers l'accueil
+            if (window.router) {
+                window.router.navigateTo('accueil');
+            }
+
+        } catch (error) {
+            console.error('Erreur:', error);
+            window.showError('loginError', 'Une erreur est survenue');
+        }
+    };
+
+    // CONNEXION GOOGLE
+    window.handleGoogleLogin = async function() {
+        try {
+            const redirectUrl = window.location.origin + '/#connect-1';
+            
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: redirectUrl,
+                    skipBrowserRedirect: false
+                }
+            });
+
+            if (error) throw error;
+
+        } catch (error) {
+            console.error('Erreur Google:', error);
+            window.showError('loginError', 'Erreur lors de la connexion Google');
+        }
+    };
+
+    // Gestion du retour OAuth
+    async function handleGoogleCallback() {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+            const user = session.user;
+            
+            const { data: existing } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('email', user.email)
+                .single();
+
+            if (existing) {
+                currentUser = existing;
+                
+                // Stocker la session
+                localStorage.setItem('sosgouv_user', JSON.stringify(currentUser));
+                
+                window.showSuccess('Connexion réussie !');
+                
+                // Rediriger vers l'accueil
+                if (window.router) {
+                    setTimeout(() => {
+                        window.router.navigateTo('accueil');
+                    }, 1000);
+                }
+            } else {
+                // Pas de compte, rediriger vers création
+                window.showError('loginError', 'Pas de compte trouvé. Créez-en un !');
+                setTimeout(() => {
+                    if (window.router) {
+                        window.router.navigateTo('connect-2');
+                    }
+                }, 2000);
+            }
+        }
+    }
+
+    handleGoogleCallback();
+
+    console.log('✅ Page connect-1 V-1 chargée');
+
+}, 500);
+</script>

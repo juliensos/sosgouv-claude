@@ -1,0 +1,342 @@
+<!-- Page de création de compte uniquement - V-1 -->
+
+<div class="page compte">
+  <div class="div-block-232">
+    <!-- COMPTE ANONYME -->
+    <div class="_w-connect-bloc">
+      <div class="dic-compte">
+        <h3>Créer un compte anonyme *</h3>
+        <form id="anonForm" class="user-pass" onsubmit="return false;">
+          <div class="_w-text-area">
+            <input type="text" id="anonUsername" placeholder="Nom d'utilisateur" 
+                   style="width: 100%; padding: 8px; border: 1px solid #aca69a; border-radius: 5px;">
+          </div>
+          <div class="_w-text-area">
+            <input type="password" id="anonPassword" placeholder="Mot de passe" 
+                   style="width: 100%; padding: 8px; border: 1px solid #aca69a; border-radius: 5px;">
+          </div>
+          <div id="anonError" style="color: #b81515; font-size: 12px; margin-top: 10px; display: none;"></div>
+        </form>
+        <div class="bg-bout">
+          <button onclick="handleAnonSignup()" class="_w-button w-button">Créer mon compte</button>
+        </div>
+      </div>
+      <div class="_w-courant">* Pas de possibilité de notifications ni de récupération de mot de passe. Mais vous pourrez modifier plus tard dans votre espace personnel</div>
+    </div>
+
+    <!-- COMPTE AVEC EMAIL -->
+    <div class="_w-connect-bloc">
+      <div class="dic-compte">
+        <h3>Créer un compte avec Email</h3>
+        <form id="emailForm" class="user-pass" onsubmit="return false;">
+          <div class="_w-text-area">
+            <input type="text" id="emailUsername" placeholder="Nom d'utilisateur" 
+                   style="width: 100%; padding: 8px; border: 1px solid #aca69a; border-radius: 5px;">
+          </div>
+          <div class="_w-text-area">
+            <input type="password" id="emailPassword" placeholder="Mot de passe" 
+                   style="width: 100%; padding: 8px; border: 1px solid #aca69a; border-radius: 5px;">
+          </div>
+          <div class="_w-text-area">
+            <input type="email" id="emailAddress" placeholder="E-mail" 
+                   style="width: 100%; padding: 8px; border: 1px solid #aca69a; border-radius: 5px;">
+          </div>
+          <div id="emailError" style="color: #b81515; font-size: 12px; margin-top: 10px; display: none;"></div>
+        </form>
+        <div class="bg-bout">
+          <button onclick="handleEmailSignup()" class="_w-button w-button">Créer mon compte</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPTE AVEC GMAIL -->
+    <div class="_w-connect-bloc">
+      <div class="dic-compte">
+        <h3>Créer un compte avec Gmail</h3>
+        <form id="gmailForm" class="user-pass" onsubmit="return false;">
+          <div class="_w-text-area">
+            <input type="text" id="gmailUsername" placeholder="Nom d'utilisateur" 
+                   style="width: 100%; padding: 8px; border: 1px solid #aca69a; border-radius: 5px;">
+          </div>
+          <div id="gmailError" style="color: #b81515; font-size: 12px; margin-top: 10px; display: none;"></div>
+        </form>
+        <div class="bg-bout">
+          <button onclick="handleGmailSignup()" class="_w-button w-button">Créer mon compte avec Gmail</button>
+        </div>
+      </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px;">
+      <div class="_w-courant" style="color: #aca69a; font-size: 12px;">
+        Déjà un compte ? 
+        <a href="#connect-1" data-page="connect-1" style="color: #973347; text-decoration: underline;">Se connecter</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Badge de version -->
+<div style="position: fixed; bottom: 20px; left: 20px; background: #aca69a; color: white; padding: 5px 10px; border-radius: 3px; font-size: 10px; font-weight: 700; z-index: 9999;">
+  V-1
+</div>
+
+<!-- Supabase Auth -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// Attendre que le script Supabase soit complètement chargé
+setTimeout(function() {
+    
+    if (typeof window.supabase === 'undefined') {
+        console.error('❌ Supabase non chargé !');
+        alert('Erreur : Impossible de charger le système d\'authentification');
+        return;
+    }
+
+    console.log('✅ Supabase chargé');
+
+    const SUPABASE_URL = 'https://ubttetrqvvbcgvwjbylr.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    window.showError = function(elementId, message) {
+        const el = document.getElementById(elementId);
+        el.textContent = message;
+        el.style.display = 'block';
+        setTimeout(() => {
+            el.style.display = 'none';
+        }, 5000);
+    };
+
+    window.showSuccess = function(message) {
+        alert('✅ ' + message);
+    };
+
+    async function hashPassword(password) {
+        const msgBuffer = new TextEncoder().encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // CRÉATION COMPTE ANONYME
+    window.handleAnonSignup = async function() {
+        const username = document.getElementById('anonUsername').value.trim();
+        const password = document.getElementById('anonPassword').value;
+
+        if (!username || !password) {
+            window.showError('anonError', 'Veuillez remplir tous les champs');
+            return;
+        }
+
+        if (password.length < 6) {
+            window.showError('anonError', 'Le mot de passe doit contenir au moins 6 caractères');
+            return;
+        }
+
+        try {
+            const { data: existing } = await supabase
+                .from('profiles')
+                .select('username')
+                .eq('username', username)
+                .single();
+
+            if (existing) {
+                window.showError('anonError', 'Ce nom d\'utilisateur existe déjà');
+                return;
+            }
+
+            const hashedPassword = await hashPassword(password);
+            const userId = crypto.randomUUID();
+
+            const { data, error } = await supabase
+                .from('profiles')
+                .insert([{
+                    id: userId,
+                    username: username,
+                    password: hashedPassword,
+                    auth_method: 'anonymous'
+                }])
+                .select();
+
+            if (error) throw error;
+
+            window.showSuccess('Compte créé ! Connectez-vous maintenant.');
+            
+            // Rediriger vers connexion
+            setTimeout(() => {
+                if (window.router) {
+                    window.router.navigateTo('connect-1');
+                }
+            }, 1500);
+
+        } catch (error) {
+            console.error('Erreur:', error);
+            window.showError('anonError', 'Une erreur est survenue');
+        }
+    };
+
+    // CRÉATION COMPTE AVEC EMAIL
+    window.handleEmailSignup = async function() {
+        const username = document.getElementById('emailUsername').value.trim();
+        const password = document.getElementById('emailPassword').value;
+        const email = document.getElementById('emailAddress').value.trim();
+
+        if (!username || !password || !email) {
+            window.showError('emailError', 'Veuillez remplir tous les champs');
+            return;
+        }
+
+        if (password.length < 6) {
+            window.showError('emailError', 'Le mot de passe doit contenir au moins 6 caractères');
+            return;
+        }
+
+        try {
+            const { data: existing } = await supabase
+                .from('profiles')
+                .select('username, email')
+                .or(`username.eq.${username},email.eq.${email}`)
+                .single();
+
+            if (existing) {
+                window.showError('emailError', 'Ce nom d\'utilisateur ou email existe déjà');
+                return;
+            }
+
+            const hashedPassword = await hashPassword(password);
+            const userId = crypto.randomUUID();
+
+            const { data, error } = await supabase
+                .from('profiles')
+                .insert([{
+                    id: userId,
+                    username: username,
+                    email: email,
+                    password: hashedPassword,
+                    auth_method: 'email'
+                }])
+                .select();
+
+            if (error) throw error;
+
+            window.showSuccess('Compte créé ! Connectez-vous maintenant.');
+            
+            // Rediriger vers connexion
+            setTimeout(() => {
+                if (window.router) {
+                    window.router.navigateTo('connect-1');
+                }
+            }, 1500);
+
+        } catch (error) {
+            console.error('Erreur:', error);
+            window.showError('emailError', 'Une erreur est survenue');
+        }
+    };
+
+    // CRÉATION COMPTE AVEC GMAIL
+    window.handleGmailSignup = async function() {
+        const username = document.getElementById('gmailUsername').value.trim();
+
+        if (!username) {
+            window.showError('gmailError', 'Veuillez entrer un nom d\'utilisateur');
+            return;
+        }
+
+        try {
+            const { data: existing } = await supabase
+                .from('profiles')
+                .select('username')
+                .eq('username', username)
+                .single();
+
+            if (existing) {
+                window.showError('gmailError', 'Ce nom d\'utilisateur existe déjà');
+                return;
+            }
+
+            // Stocker le username temporairement pour l'utiliser après OAuth
+            localStorage.setItem('pending_username', username);
+
+            // Lancer l'authentification Google
+            const redirectUrl = window.location.origin + '/#connect-2';
+            
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: redirectUrl
+                }
+            });
+
+            if (error) throw error;
+
+        } catch (error) {
+            console.error('Erreur:', error);
+            window.showError('gmailError', 'Une erreur est survenue');
+        }
+    };
+
+    // Gestion du retour OAuth
+    async function handleGoogleCallback() {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+            const user = session.user;
+            const pendingUsername = localStorage.getItem('pending_username');
+            
+            const { data: existing } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('email', user.email)
+                .single();
+
+            if (!existing && pendingUsername) {
+                // Créer le profil
+                await supabase
+                    .from('profiles')
+                    .insert([{
+                        id: user.id,
+                        username: pendingUsername,
+                        email: user.email,
+                        auth_method: 'google'
+                    }]);
+
+                const currentUser = {
+                    id: user.id,
+                    username: pendingUsername,
+                    email: user.email,
+                    auth_method: 'google'
+                };
+                
+                // Stocker la session
+                localStorage.setItem('sosgouv_user', JSON.stringify(currentUser));
+                localStorage.removeItem('pending_username');
+                
+                window.showSuccess('Compte créé avec succès !');
+                
+                // Rediriger vers l'accueil
+                if (window.router) {
+                    setTimeout(() => {
+                        window.router.navigateTo('accueil');
+                    }, 1000);
+                }
+            } else if (existing) {
+                window.showError('gmailError', 'Ce compte existe déjà. Connectez-vous !');
+                localStorage.removeItem('pending_username');
+                setTimeout(() => {
+                    if (window.router) {
+                        window.router.navigateTo('connect-1');
+                    }
+                }, 2000);
+            }
+        }
+    }
+
+    handleGoogleCallback();
+
+    console.log('✅ Page connect-2 V-1 chargée');
+
+}, 500);
+</script>
