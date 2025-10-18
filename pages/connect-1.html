@@ -1,4 +1,4 @@
-<!-- Page de connexion uniquement - V-1 -->
+<!-- Page de connexion V-4 -->
 
 <div class="page compte">
   <!-- CONNEXION -->
@@ -34,7 +34,7 @@
 
 <!-- Badge de version -->
 <div style="position: fixed; bottom: 20px; left: 20px; background: #aca69a; color: white; padding: 5px 10px; border-radius: 3px; font-size: 10px; font-weight: 700; z-index: 9999;">
-  V-1
+  V-4
 </div>
 
 <!-- Supabase Auth -->
@@ -104,10 +104,11 @@ setTimeout(function() {
             }
 
             currentUser = data;
-            window.showSuccess('Connexion réussie !');
             
             // Stocker la session
             localStorage.setItem('sosgouv_user', JSON.stringify(currentUser));
+            
+            window.showSuccess('Connexion réussie !');
             
             // Rediriger vers l'accueil
             if (window.router) {
@@ -120,10 +121,11 @@ setTimeout(function() {
         }
     };
 
-    // CONNEXION GOOGLE
+    // CONNEXION GOOGLE (V-4 CORRIGÉ)
     window.handleGoogleLogin = async function() {
         try {
-            const redirectUrl = window.location.href.split('?')[0].split('#')[0] + '#connect-2';
+            const redirectUrl = window.location.origin + window.location.pathname + '#connect-1';
+            console.log('🔗 Google Login Redirect URL:', redirectUrl);
             
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
@@ -141,20 +143,34 @@ setTimeout(function() {
         }
     };
 
-    // Gestion du retour OAuth
+    // Gestion du retour OAuth (V-4 CORRIGÉ)
     async function handleGoogleCallback() {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log('🔍 Vérification callback OAuth login...');
+        
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+            console.error('Erreur session:', sessionError);
+            return;
+        }
         
         if (session) {
+            console.log('✅ Session OAuth détectée');
             const user = session.user;
             
-            const { data: existing } = await supabase
+            // Vérifier si le profil existe
+            const { data: existing, error: existingError } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('email', user.email)
                 .single();
 
+            if (existingError && existingError.code !== 'PGRST116') {
+                console.error('Erreur vérification existing:', existingError);
+            }
+
             if (existing) {
+                console.log('✅ Profil trouvé:', existing);
                 currentUser = existing;
                 
                 // Stocker la session
@@ -169,20 +185,28 @@ setTimeout(function() {
                     }, 1000);
                 }
             } else {
+                console.log('❌ Pas de profil trouvé');
                 // Pas de compte, rediriger vers création
                 window.showError('loginError', 'Pas de compte trouvé. Créez-en un !');
+                
+                // Déconnecter de Supabase Auth
+                await supabase.auth.signOut();
+                
                 setTimeout(() => {
                     if (window.router) {
                         window.router.navigateTo('connect-2');
                     }
                 }, 2000);
             }
+        } else {
+            console.log('ℹ️ Pas de session OAuth');
         }
     }
 
+    // Exécuter le callback immédiatement
     handleGoogleCallback();
 
-    console.log('✅ Page connect-1 V-1 chargée');
+    console.log('✅ Page connect-1 V-4 chargée');
 
 }, 500);
 </script>
