@@ -1,5 +1,5 @@
 // ============================================
-// SOSGOUV - Router System
+// SOSGOUV - Router System V-2
 // Gère le chargement dynamique des pages
 // ============================================
 
@@ -9,10 +9,15 @@ class Router {
     this.routes = {
       'accueil': 'pages/page-accueil-temp.html',
       'connect': 'pages/connect.html',
+      'connect-1': 'pages/connect-1.html',
+      'connect-2': 'pages/connect-2.html',
+      'membres': 'pages/page-liste-membres.html',
+      'personnalites': 'pages/page-liste-personalites.html',
       'gouvernements': 'pages/page-gouv-publies.html',
-      'personnalites': 'pages/page-personnalites.html',
       'faq': 'pages/page-faq.html',
-      'apropos': 'pages/page-apropos.html'
+      'apropos': 'pages/page-apropos.html',
+      'mon-espace': 'pages/page-mon-espace.html',
+      'reglages': 'pages/page-reglages.html'
     };
     this.currentPage = null;
     this.init();
