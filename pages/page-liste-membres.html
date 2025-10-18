@@ -1,0 +1,182 @@
+<!-- Liste des membres - V-1 -->
+
+<div style="padding: 40px 20px;">
+  <h2 style="margin-bottom: 20px; font-size: 24px; font-weight: 700;">👥 Liste des membres</h2>
+  
+  <!-- Filtres -->
+  <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+    <button onclick="filterMembers('all')" class="_w-button" id="filter-all" style="background: #000;">
+      Tous
+    </button>
+    <button onclick="filterMembers('anonymous')" class="_w-button" id="filter-anonymous" style="background: #666;">
+      Anonymes
+    </button>
+    <button onclick="filterMembers('email')" class="_w-button" id="filter-email" style="background: #4285f4;">
+      Avec Email
+    </button>
+    <button onclick="filterMembers('google')" class="_w-button" id="filter-google" style="background: #db4437;">
+      Avec Google
+    </button>
+  </div>
+  
+  <!-- Stats -->
+  <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+      <div>
+        <strong style="font-size: 24px; color: #000;" id="total-members">0</strong>
+        <div style="font-size: 12px; color: #aca69a;">Total membres</div>
+      </div>
+      <div>
+        <strong style="font-size: 24px; color: #666;" id="total-anonymous">0</strong>
+        <div style="font-size: 12px; color: #aca69a;">Anonymes</div>
+      </div>
+      <div>
+        <strong style="font-size: 24px; color: #4285f4;" id="total-email">0</strong>
+        <div style="font-size: 12px; color: #aca69a;">Avec Email</div>
+      </div>
+      <div>
+        <strong style="font-size: 24px; color: #db4437;" id="total-google">0</strong>
+        <div style="font-size: 12px; color: #aca69a;">Avec Google</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Liste -->
+  <div id="membersList" style="display: grid; gap: 10px;">
+    <div style="text-align: center; padding: 40px; color: #aca69a;">
+      Chargement...
+    </div>
+  </div>
+</div>
+
+<!-- Badge de version -->
+<div style="position: fixed; bottom: 20px; left: 20px; background: #aca69a; color: white; padding: 5px 10px; border-radius: 3px; font-size: 10px; font-weight: 700; z-index: 9999;">
+  V-1
+</div>
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+setTimeout(function() {
+    
+    if (typeof window.supabase === 'undefined') {
+        console.error('❌ Supabase non chargé !');
+        document.getElementById('membersList').innerHTML = '<div style="text-align: center; padding: 40px; color: #b81515;">Erreur : Impossible de charger les données</div>';
+        return;
+    }
+
+    const SUPABASE_URL = 'https://ubttetrqvvbcgvwjbylr.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    let allMembers = [];
+    let currentFilter = 'all';
+
+    // Charger les membres
+    async function loadMembers() {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, username, email, auth_method, created_at')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            allMembers = data || [];
+            
+            // Mettre à jour les stats
+            updateStats();
+            
+            // Afficher les membres
+            displayMembers(allMembers);
+
+        } catch (error) {
+            console.error('Erreur:', error);
+            document.getElementById('membersList').innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #b81515;">
+                    Erreur : ${error.message}
+                </div>
+            `;
+        }
+    }
+
+    // Mettre à jour les statistiques
+    function updateStats() {
+        document.getElementById('total-members').textContent = allMembers.length;
+        document.getElementById('total-anonymous').textContent = allMembers.filter(m => m.auth_method === 'anonymous').length;
+        document.getElementById('total-email').textContent = allMembers.filter(m => m.auth_method === 'email').length;
+        document.getElementById('total-google').textContent = allMembers.filter(m => m.auth_method === 'google').length;
+    }
+
+    // Afficher les membres
+    function displayMembers(members) {
+        const listEl = document.getElementById('membersList');
+
+        if (!members || members.length === 0) {
+            listEl.innerHTML = '<div style="text-align: center; padding: 40px; color: #aca69a;">Aucun membre pour le moment</div>';
+            return;
+        }
+
+        listEl.innerHTML = members.map(member => {
+            const badgeColor = {
+                'anonymous': '#666',
+                'email': '#4285f4',
+                'google': '#db4437'
+            }[member.auth_method] || '#000';
+
+            const badgeText = {
+                'anonymous': 'ANONYME',
+                'email': 'EMAIL',
+                'google': 'GOOGLE'
+            }[member.auth_method] || member.auth_method.toUpperCase();
+
+            return `
+                <div style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 5px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 700; font-size: 16px; margin-bottom: 5px;">
+                            ${member.username}
+                        </div>
+                        <div style="font-size: 12px; color: #aca69a;">
+                            ${member.email || 'Compte anonyme'} • 
+                            Inscrit le ${new Date(member.created_at).toLocaleDateString('fr-FR')}
+                        </div>
+                    </div>
+                    <div style="background: ${badgeColor}; color: white; padding: 5px 10px; border-radius: 15px; font-size: 11px; font-weight: 700;">
+                        ${badgeText}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Filtrer les membres
+    window.filterMembers = function(filter) {
+        currentFilter = filter;
+        
+        // Mettre à jour les styles des boutons
+        document.querySelectorAll('[id^="filter-"]').forEach(btn => {
+            btn.style.opacity = '0.5';
+        });
+        document.getElementById(`filter-${filter}`).style.opacity = '1';
+
+        // Filtrer
+        let filtered = allMembers;
+        if (filter !== 'all') {
+            filtered = allMembers.filter(m => m.auth_method === filter);
+        }
+
+        displayMembers(filtered);
+    };
+
+    // Charger au démarrage
+    loadMembers();
+
+    // Rafraîchir toutes les 30 secondes
+    setInterval(loadMembers, 30000);
+
+    console.log('✅ Page liste membres V-1 chargée');
+
+}, 500);
+</script>

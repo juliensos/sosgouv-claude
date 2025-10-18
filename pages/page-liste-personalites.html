@@ -1,0 +1,221 @@
+<!-- Liste des personnalités - V-1 -->
+
+<div style="padding: 40px 20px;">
+  <h2 style="margin-bottom: 20px; font-size: 24px; font-weight: 700;">⭐ Liste des personnalités</h2>
+  
+  <!-- Filtres -->
+  <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+    <button onclick="filterPersonalities('all')" class="_w-button" id="filter-all" style="background: #000;">
+      Toutes
+    </button>
+    <button onclick="filterPersonalities('ok')" class="_w-button" id="filter-ok" style="background: #5ae799;">
+      Validées
+    </button>
+    <button onclick="filterPersonalities('neant')" class="_w-button" id="filter-neant" style="background: #aca69a;">
+      En attente
+    </button>
+    <button onclick="filterPersonalities('suspend')" class="_w-button" id="filter-suspend" style="background: #f5b800;">
+      Suspendues
+    </button>
+    <button onclick="filterPersonalities('refus')" class="_w-button" id="filter-refus" style="background: #b81515;">
+      Refusées
+    </button>
+  </div>
+  
+  <!-- Stats -->
+  <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+      <div>
+        <strong style="font-size: 24px; color: #000;" id="total-personalities">0</strong>
+        <div style="font-size: 12px; color: #aca69a;">Total personnalités</div>
+      </div>
+      <div>
+        <strong style="font-size: 24px; color: #5ae799;" id="total-ok">0</strong>
+        <div style="font-size: 12px; color: #aca69a;">Validées</div>
+      </div>
+      <div>
+        <strong style="font-size: 24px; color: #aca69a;" id="total-neant">0</strong>
+        <div style="font-size: 12px; color: #aca69a;">En attente</div>
+      </div>
+      <div>
+        <strong style="font-size: 24px; color: #f5b800;" id="total-suspend">0</strong>
+        <div style="font-size: 12px; color: #aca69a;">Suspendues</div>
+      </div>
+      <div>
+        <strong style="font-size: 24px; color: #b81515;" id="total-refus">0</strong>
+        <div style="font-size: 12px; color: #aca69a;">Refusées</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Liste -->
+  <div id="personalitiesList" style="display: grid; gap: 10px;">
+    <div style="text-align: center; padding: 40px; color: #aca69a;">
+      Chargement...
+    </div>
+  </div>
+</div>
+
+<!-- Badge de version -->
+<div style="position: fixed; bottom: 20px; left: 20px; background: #aca69a; color: white; padding: 5px 10px; border-radius: 3px; font-size: 10px; font-weight: 700; z-index: 9999;">
+  V-1
+</div>
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+setTimeout(function() {
+    
+    if (typeof window.supabase === 'undefined') {
+        console.error('❌ Supabase non chargé !');
+        document.getElementById('personalitiesList').innerHTML = '<div style="text-align: center; padding: 40px; color: #b81515;">Erreur : Impossible de charger les données</div>';
+        return;
+    }
+
+    const SUPABASE_URL = 'https://ubttetrqvvbcgvwjbylr.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    let allPersonalities = [];
+    let currentFilter = 'all';
+
+    // Charger les personnalités
+    async function loadPersonalities() {
+        try {
+            const { data, error } = await supabase
+                .from('personalities')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            allPersonalities = data || [];
+            
+            // Mettre à jour les stats
+            updateStats();
+            
+            // Afficher les personnalités
+            displayPersonalities(allPersonalities);
+
+        } catch (error) {
+            console.error('Erreur:', error);
+            
+            // Si la table n'existe pas
+            if (error.message.includes('does not exist')) {
+                document.getElementById('personalitiesList').innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #aca69a;">
+                        <div style="font-size: 18px; margin-bottom: 10px;">📋 Aucune personnalité pour le moment</div>
+                        <div style="font-size: 12px;">La table "personalities" n'existe pas encore dans Supabase.</div>
+                    </div>
+                `;
+            } else {
+                document.getElementById('personalitiesList').innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #b81515;">
+                        Erreur : ${error.message}
+                    </div>
+                `;
+            }
+        }
+    }
+
+    // Mettre à jour les statistiques
+    function updateStats() {
+        document.getElementById('total-personalities').textContent = allPersonalities.length;
+        document.getElementById('total-ok').textContent = allPersonalities.filter(p => p.statut === 'ok').length;
+        document.getElementById('total-neant').textContent = allPersonalities.filter(p => p.statut === 'neant' || !p.statut).length;
+        document.getElementById('total-suspend').textContent = allPersonalities.filter(p => p.statut === 'suspend').length;
+        document.getElementById('total-refus').textContent = allPersonalities.filter(p => p.statut === 'refus').length;
+    }
+
+    // Afficher les personnalités
+    function displayPersonalities(personalities) {
+        const listEl = document.getElementById('personalitiesList');
+
+        if (!personalities || personalities.length === 0) {
+            listEl.innerHTML = '<div style="text-align: center; padding: 40px; color: #aca69a;">Aucune personnalité pour le moment</div>';
+            return;
+        }
+
+        listEl.innerHTML = personalities.map(person => {
+            const badgeConfig = {
+                'ok': { color: '#5ae799', text: 'VALIDÉE' },
+                'neant': { color: '#aca69a', text: 'EN ATTENTE' },
+                'suspend': { color: '#f5b800', text: 'SUSPENDUE' },
+                'refus': { color: '#b81515', text: 'REFUSÉE' }
+            };
+
+            const status = person.statut || 'neant';
+            const badge = badgeConfig[status] || badgeConfig['neant'];
+
+            return `
+                <div style="padding: 15px; background: #fff; border: 1px solid #e0e0e0; border-radius: 5px;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                        <div>
+                            <div style="font-weight: 700; font-size: 16px; margin-bottom: 5px;">
+                                ${person.nom || ''} ${person.prenom || ''}
+                            </div>
+                            <div style="font-size: 12px; color: #aca69a; font-style: italic;">
+                                ${person.profession || 'Profession non renseignée'}
+                            </div>
+                        </div>
+                        <div style="background: ${badge.color}; color: ${status === 'ok' ? '#000' : '#fff'}; padding: 5px 10px; border-radius: 15px; font-size: 11px; font-weight: 700; white-space: nowrap;">
+                            ${badge.text}
+                        </div>
+                    </div>
+                    
+                    ${person.fonction ? `
+                        <div style="font-size: 12px; margin-bottom: 5px;">
+                            <strong>Fonction :</strong> ${person.fonction}
+                        </div>
+                    ` : ''}
+                    
+                    ${person.short_bio ? `
+                        <div style="font-size: 12px; color: #666; margin-top: 10px;">
+                            ${person.short_bio}
+                        </div>
+                    ` : ''}
+                    
+                    <div style="display: flex; gap: 15px; margin-top: 10px; font-size: 11px; color: #aca69a;">
+                        ${person.nb_likes ? `<div>❤️ ${person.nb_likes} likes</div>` : ''}
+                        ${person.ajoute_par ? `<div>Ajouté par : ${person.ajoute_par}</div>` : ''}
+                        <div>Créé le : ${new Date(person.created_at).toLocaleDateString('fr-FR')}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Filtrer les personnalités
+    window.filterPersonalities = function(filter) {
+        currentFilter = filter;
+        
+        // Mettre à jour les styles des boutons
+        document.querySelectorAll('[id^="filter-"]').forEach(btn => {
+            btn.style.opacity = '0.5';
+        });
+        document.getElementById(`filter-${filter}`).style.opacity = '1';
+
+        // Filtrer
+        let filtered = allPersonalities;
+        if (filter !== 'all') {
+            filtered = allPersonalities.filter(p => {
+                const status = p.statut || 'neant';
+                return status === filter;
+            });
+        }
+
+        displayPersonalities(filtered);
+    };
+
+    // Charger au démarrage
+    loadPersonalities();
+
+    // Rafraîchir toutes les 30 secondes
+    setInterval(loadPersonalities, 30000);
+
+    console.log('✅ Page liste personnalités V-1 chargée');
+
+}, 500);
+</script>
