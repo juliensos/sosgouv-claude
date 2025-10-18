@@ -66,7 +66,7 @@
           <div id="menuConnected" class="drop-bloc-compte" style="display: none;">
             <a href="#mon-espace" data-page="mon-espace" class="_w-dropdown-link">Mon espace</a>
             <a href="#reglages" data-page="reglages" class="_w-dropdown-link">Réglages utilisateurs</a>
-            <a href="#" onclick="handleLogout()" class="_w-dropdown-link">Me déconnecter</a>
+            <a href="#" onclick="handleLogout(); return false;" class="_w-dropdown-link">Me déconnecter</a>
           </div>
           
           <div class="drop-bloc-compte">
@@ -86,7 +86,7 @@
     <div class="w-layout-blockcontainer n-footer w-container">
       <div class="admin-bloc _0">
         <div class="test-version">espace admin</div>
-        <div class="test-version">V-2</div>
+        <div class="test-version">V-3</div>
       </div>
       <div class="admin-bloc">
         <a href="#personnalites" data-page="personnalites">liste personnalités</a>
@@ -101,6 +101,9 @@
   <script src="https://cdn.prod.website-files.com/68ecfda4d9b3270b98426ff5/js/webflow.schunk.50d850aa4962b686.js" type="text/javascript"></script>
   <script src="https://cdn.prod.website-files.com/68ecfda4d9b3270b98426ff5/js/webflow.schunk.0a46a3eef4d87fb7.js" type="text/javascript"></script>
   <script src="https://cdn.prod.website-files.com/68ecfda4d9b3270b98426ff5/js/webflow.45db7ba0.f8aeaa00459718de.js" type="text/javascript"></script>
+  
+  <!-- Supabase (pour la déconnexion OAuth) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <!-- Auth Menu Manager -->
   <script>
@@ -123,9 +126,28 @@
       }
     }
     
-    // Déconnexion
-    window.handleLogout = function() {
+    // Déconnexion (CORRIGÉE - V-3)
+    window.handleLogout = async function() {
+      console.log('🔴 Déconnexion en cours...');
+      
+      // Supprimer le localStorage
       localStorage.removeItem('sosgouv_user');
+      localStorage.removeItem('pending_username');
+      
+      // Déconnecter de Supabase (pour OAuth Google)
+      if (typeof window.supabase !== 'undefined') {
+        try {
+          const SUPABASE_URL = 'https://ubttetrqvvbcgvwjbylr.supabase.co';
+          const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
+          const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+          await supabase.auth.signOut();
+          console.log('✅ Session Supabase déconnectée');
+        } catch (error) {
+          console.error('Erreur déconnexion Supabase:', error);
+        }
+      }
+      
+      // Mettre à jour le menu
       updateMenu();
       
       // Rediriger vers accueil
