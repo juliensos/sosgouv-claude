@@ -190,7 +190,7 @@ setTimeout(function() {
     // ============================================
     window.handleGoogleLogin = async function() {
         try {
-            const redirectUrl = window.location.origin + '/#connect';
+            const redirectUrl = window.location.href.split('?')[0].split('#')[0] + '#connect-2';
             
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
