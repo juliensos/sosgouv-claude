@@ -261,7 +261,8 @@ setTimeout(function() {
             localStorage.setItem('pending_username', username);
 
             // Lancer l'authentification Google
-            const redirectUrl = window.location.origin + '/#connect-2';
+            const redirectUrl = window.location.href.split('?')[0].split('#')[0] + '#connect-2';
+
             
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
