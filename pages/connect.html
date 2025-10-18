@@ -1,0 +1,394 @@
+<!-- Page de connexion et création de compte -->
+<div class="page compte">
+  <!-- CONNEXION -->
+  <div class="_w-connect-bloc">
+    <h3>Me connecter</h3>
+    <form id="loginForm" class="user-pass">
+      <div class="_w-text-area">
+        <input type="text" id="loginUsername" placeholder="Nom d'utilisateur" 
+               style="width: 100%; padding: 8px; border: 1px solid #aca69a; border-radius: 5px;">
+      </div>
+      <div class="_w-text-area">
+        <input type="password" id="loginPassword" placeholder="Mot de passe" 
+               style="width: 100%; padding: 8px; border: 1px solid #aca69a; border-radius: 5px;">
+      </div>
+      <div id="loginError" style="color: #b81515; font-size: 12px; margin-top: 10px; display: none;"></div>
+    </form>
+    <div class="bg-bout">
+      <button onclick="handleLogin()" class="_w-button red w-button">Me connecter</button>
+      <div class="div-block-230">
+        <div class="_w-courant">Ou</div>
+      </div>
+      <button onclick="handleGoogleLogin()" class="_w-button red w-button">Me connecter avec Gmail</button>
+    </div>
+  </div>
+
+  <div class="div-block-232">
+    <!-- COMPTE ANONYME -->
+    <div class="_w-connect-bloc">
+      <div class="dic-compte">
+        <h3>Créer un compte anonyme *</h3>
+        <form id="anonForm" class="user-pass">
+          <div class="_w-text-area">
+            <input type="text" id="anonUsername" placeholder="Nom d'utilisateur" 
+                   style="width: 100%; padding: 8px; border: 1px solid #aca69a; border-radius: 5px;">
+          </div>
+          <div class="_w-text-area">
+            <input type="password" id="anonPassword" placeholder="Mot de passe" 
+                   style="width: 100%; padding: 8px; border: 1px solid #aca69a; border-radius: 5px;">
+          </div>
+          <div id="anonError" style="color: #b81515; font-size: 12px; margin-top: 10px; display: none;"></div>
+        </form>
+        <div class="bg-bout">
+          <button onclick="handleAnonSignup()" class="_w-button w-button">Créer mon compte</button>
+        </div>
+      </div>
+      <div class="_w-courant">* Pas de possibilité de notifications ni de récupération de mot de passe. Mais vous pourrez modifier plus tard dans votre espace personnel</div>
+    </div>
+
+    <!-- COMPTE AVEC EMAIL -->
+    <div class="_w-connect-bloc">
+      <div class="dic-compte">
+        <h3>Créer un compte avec Email</h3>
+        <form id="emailForm" class="user-pass">
+          <div class="_w-text-area">
+            <input type="text" id="emailUsername" placeholder="Nom d'utilisateur" 
+                   style="width: 100%; padding: 8px; border: 1px solid #aca69a; border-radius: 5px;">
+          </div>
+          <div class="_w-text-area">
+            <input type="password" id="emailPassword" placeholder="Mot de passe" 
+                   style="width: 100%; padding: 8px; border: 1px solid #aca69a; border-radius: 5px;">
+          </div>
+          <div class="_w-text-area">
+            <input type="email" id="emailAddress" placeholder="E-mail" 
+                   style="width: 100%; padding: 8px; border: 1px solid #aca69a; border-radius: 5px;">
+          </div>
+          <div id="emailError" style="color: #b81515; font-size: 12px; margin-top: 10px; display: none;"></div>
+        </form>
+        <div class="bg-bout">
+          <button onclick="handleEmailSignup()" class="_w-button w-button">Créer mon compte</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPTE AVEC GMAIL -->
+    <div class="_w-connect-bloc">
+      <div class="dic-compte">
+        <h3>Créer un compte avec Gmail</h3>
+        <form id="gmailForm" class="user-pass">
+          <div class="_w-text-area">
+            <input type="text" id="gmailUsername" placeholder="Nom d'utilisateur" 
+                   style="width: 100%; padding: 8px; border: 1px solid #aca69a; border-radius: 5px;">
+          </div>
+          <div id="gmailError" style="color: #b81515; font-size: 12px; margin-top: 10px; display: none;"></div>
+        </form>
+        <div class="bg-bout">
+          <button onclick="handleGmailSignup()" class="_w-button w-button">Créer mon compte avec Gmail</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Supabase Auth -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// ============================================
+// Configuration Supabase
+// ============================================
+const SUPABASE_URL = 'https://ubttetrqvvbcgvwjbylr.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ============================================
+// Fonctions utilitaires
+// ============================================
+function showError(elementId, message) {
+  const errorEl = document.getElementById(elementId);
+  errorEl.textContent = message;
+  errorEl.style.display = 'block';
+  setTimeout(() => {
+    errorEl.style.display = 'none';
+  }, 5000);
+}
+
+function showSuccess(message) {
+  alert('✅ ' + message);
+}
+
+// ============================================
+// CONNEXION STANDARD
+// ============================================
+async function handleLogin() {
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+
+  if (!username || !password) {
+    showError('loginError', 'Veuillez remplir tous les champs');
+    return;
+  }
+
+  try {
+    // Récupérer le profil avec ce username
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('email, auth_id')
+      .eq('username', username)
+      .single();
+
+    if (profileError || !profile) {
+      showError('loginError', 'Nom d\'utilisateur ou mot de passe incorrect');
+      return;
+    }
+
+    // Se connecter avec l'email et le mot de passe
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: profile.email || `${username}@anonymous.sosgouv.local`,
+      password: password
+    });
+
+    if (error) {
+      showError('loginError', 'Nom d\'utilisateur ou mot de passe incorrect');
+      return;
+    }
+
+    showSuccess('Connexion réussie !');
+    // Rediriger vers l'accueil
+    window.router.navigateTo('accueil');
+
+  } catch (error) {
+    console.error('Erreur:', error);
+    showError('loginError', 'Une erreur est survenue');
+  }
+}
+
+// ============================================
+// CONNEXION GOOGLE
+// ============================================
+async function handleGoogleLogin() {
+  try {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/#accueil'
+      }
+    });
+
+    if (error) {
+      showError('loginError', 'Erreur lors de la connexion Google');
+    }
+  } catch (error) {
+    console.error('Erreur Google:', error);
+    showError('loginError', 'Une erreur est survenue');
+  }
+}
+
+// ============================================
+// CRÉATION COMPTE ANONYME
+// ============================================
+async function handleAnonSignup() {
+  const username = document.getElementById('anonUsername').value.trim();
+  const password = document.getElementById('anonPassword').value;
+
+  if (!username || !password) {
+    showError('anonError', 'Veuillez remplir tous les champs');
+    return;
+  }
+
+  if (password.length < 6) {
+    showError('anonError', 'Le mot de passe doit contenir au moins 6 caractères');
+    return;
+  }
+
+  try {
+    // Vérifier si le username existe déjà
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('username', username)
+      .single();
+
+    if (existing) {
+      showError('anonError', 'Ce nom d\'utilisateur existe déjà');
+      return;
+    }
+
+    // Créer un compte anonyme (sans email)
+    const fakeEmail = `${username}@anonymous.sosgouv.local`;
+    
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: fakeEmail,
+      password: password
+    });
+
+    if (authError) {
+      showError('anonError', authError.message);
+      return;
+    }
+
+    // Créer le profil
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        id: authData.user.id,
+        username: username,
+        email: null,
+        auth_method: 'anonymous'
+      });
+
+    if (profileError) {
+      showError('anonError', 'Erreur lors de la création du profil');
+      return;
+    }
+
+    showSuccess('Compte créé avec succès !');
+    window.router.navigateTo('accueil');
+
+  } catch (error) {
+    console.error('Erreur:', error);
+    showError('anonError', 'Une erreur est survenue');
+  }
+}
+
+// ============================================
+// CRÉATION COMPTE AVEC EMAIL
+// ============================================
+async function handleEmailSignup() {
+  const username = document.getElementById('emailUsername').value.trim();
+  const password = document.getElementById('emailPassword').value;
+  const email = document.getElementById('emailAddress').value.trim();
+
+  if (!username || !password || !email) {
+    showError('emailError', 'Veuillez remplir tous les champs');
+    return;
+  }
+
+  if (password.length < 6) {
+    showError('emailError', 'Le mot de passe doit contenir au moins 6 caractères');
+    return;
+  }
+
+  try {
+    // Vérifier si le username existe déjà
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('username', username)
+      .single();
+
+    if (existing) {
+      showError('emailError', 'Ce nom d\'utilisateur existe déjà');
+      return;
+    }
+
+    // Créer le compte
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: email,
+      password: password
+    });
+
+    if (authError) {
+      showError('emailError', authError.message);
+      return;
+    }
+
+    // Créer le profil
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        id: authData.user.id,
+        username: username,
+        email: email,
+        auth_method: 'email'
+      });
+
+    if (profileError) {
+      showError('emailError', 'Erreur lors de la création du profil');
+      return;
+    }
+
+    showSuccess('Compte créé avec succès ! Vérifiez votre email pour confirmer.');
+    window.router.navigateTo('accueil');
+
+  } catch (error) {
+    console.error('Erreur:', error);
+    showError('emailError', 'Une erreur est survenue');
+  }
+}
+
+// ============================================
+// CRÉATION COMPTE AVEC GMAIL
+// ============================================
+async function handleGmailSignup() {
+  const username = document.getElementById('gmailUsername').value.trim();
+
+  if (!username) {
+    showError('gmailError', 'Veuillez entrer un nom d\'utilisateur');
+    return;
+  }
+
+  try {
+    // Vérifier si le username existe déjà
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('username', username)
+      .single();
+
+    if (existing) {
+      showError('gmailError', 'Ce nom d\'utilisateur existe déjà');
+      return;
+    }
+
+    // Stocker le username temporairement pour l'utiliser après OAuth
+    localStorage.setItem('pending_username', username);
+
+    // Lancer l'authentification Google
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/#accueil'
+      }
+    });
+
+    if (error) {
+      showError('gmailError', 'Erreur lors de la connexion Google');
+    }
+
+  } catch (error) {
+    console.error('Erreur:', error);
+    showError('gmailError', 'Une erreur est survenue');
+  }
+}
+
+// ============================================
+// Gestion du retour OAuth
+// ============================================
+supabase.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    const pendingUsername = localStorage.getItem('pending_username');
+    
+    if (pendingUsername) {
+      // Créer le profil avec le username choisi
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: session.user.id,
+          username: pendingUsername,
+          email: session.user.email,
+          auth_method: 'google'
+        });
+
+      localStorage.removeItem('pending_username');
+
+      if (!error) {
+        showSuccess('Compte créé avec succès !');
+      }
+    }
+  }
+});
+
+console.log('✅ Page de connexion chargée');
+</script>
