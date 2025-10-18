@@ -28,6 +28,12 @@
     !function(o,c){var n=c.documentElement,t=" w-mod-";n.className+=t+"js",("ontouchstart"in o||o.DocumentTouch&&c instanceof DocumentTouch)&&(n.className+=t+"touch")}(window,document);
   </script>
   
+  <!-- CACHER LOGO WEBFLOW -->
+  <style>
+    a[href*="webflow"] { display: none !important; }
+    img[src*="webflow"] { display: none !important; }
+  </style>
+  
   <link href="https://cdn.prod.website-files.com/img/favicon.ico" rel="shortcut icon" type="image/x-icon"/>
   <link href="https://cdn.prod.website-files.com/img/webclip.png" rel="apple-touch-icon"/>
 </head>
@@ -64,6 +70,12 @@
           
           <!-- Menu CONNECTÉ -->
           <div id="menuConnected" class="drop-bloc-compte" style="display: none;">
+            <!-- Info utilisateur connecté -->
+            <div style="padding: 10px; border-bottom: 1px solid #aca69a; margin-bottom: 10px;">
+              <div style="color: #aca69a; font-size: 11px; margin-bottom: 5px;">Connecté en tant que :</div>
+              <div id="connectedUsername" style="color: #f5b800; font-weight: 700; font-size: 14px;">-</div>
+            </div>
+            
             <a href="#mon-espace" data-page="mon-espace" class="_w-dropdown-link">Mon espace</a>
             <a href="#reglages" data-page="reglages" class="_w-dropdown-link">Réglages utilisateurs</a>
             <a href="#" onclick="handleLogout(); return false;" class="_w-dropdown-link">Me déconnecter</a>
@@ -86,7 +98,7 @@
     <div class="w-layout-blockcontainer n-footer w-container">
       <div class="admin-bloc _0">
         <div class="test-version">espace admin</div>
-        <div class="test-version">V-3</div>
+        <div class="test-version">V-4</div>
       </div>
       <div class="admin-bloc">
         <a href="#personnalites" data-page="personnalites">liste personnalités</a>
@@ -102,22 +114,38 @@
   <script src="https://cdn.prod.website-files.com/68ecfda4d9b3270b98426ff5/js/webflow.schunk.0a46a3eef4d87fb7.js" type="text/javascript"></script>
   <script src="https://cdn.prod.website-files.com/68ecfda4d9b3270b98426ff5/js/webflow.45db7ba0.f8aeaa00459718de.js" type="text/javascript"></script>
   
-  <!-- Supabase (pour la déconnexion OAuth) -->
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
-  <!-- Auth Menu Manager -->
+  <!-- Auth Menu Manager V-4 -->
   <script>
     // Gestion du menu dynamique selon connexion
     function updateMenu() {
-      const user = localStorage.getItem('sosgouv_user');
+      const userStr = localStorage.getItem('sosgouv_user');
       const menuNotConnected = document.getElementById('menuNotConnected');
       const menuConnected = document.getElementById('menuConnected');
+      const usernameDisplay = document.getElementById('connectedUsername');
       
-      if (user) {
-        // Utilisateur connecté
-        menuNotConnected.style.display = 'none';
-        menuConnected.style.display = 'block';
-        console.log('✅ Utilisateur connecté');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          
+          // Utilisateur connecté
+          menuNotConnected.style.display = 'none';
+          menuConnected.style.display = 'block';
+          
+          // Afficher le nom d'utilisateur
+          if (usernameDisplay) {
+            usernameDisplay.textContent = user.username || user.email || 'Utilisateur';
+          }
+          
+          console.log('✅ Utilisateur connecté:', user.username);
+        } catch (e) {
+          console.error('Erreur parsing user:', e);
+          localStorage.removeItem('sosgouv_user');
+          menuNotConnected.style.display = 'block';
+          menuConnected.style.display = 'none';
+        }
       } else {
         // Utilisateur non connecté
         menuNotConnected.style.display = 'block';
@@ -126,7 +154,7 @@
       }
     }
     
-    // Déconnexion (CORRIGÉE - V-3)
+    // Déconnexion (V-4)
     window.handleLogout = async function() {
       console.log('🔴 Déconnexion en cours...');
       
