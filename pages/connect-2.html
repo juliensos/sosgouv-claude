@@ -262,7 +262,7 @@ setTimeout(function() {
             console.log('💾 Username sauvegardé:', username);
 
             // Lancer l'authentification Google
-            const redirectUrl = window.location.origin + window.location.pathname + '#connect-2';
+            const redirectUrl = window.location.origin + window.location.pathname;
             console.log('🔗 Redirect URL:', redirectUrl);
             
             const { error } = await supabase.auth.signInWithOAuth({
