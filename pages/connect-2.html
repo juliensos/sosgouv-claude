@@ -293,6 +293,7 @@ setTimeout(function() {
         
         if (session) {
             console.log('✅ Session OAuth détectée');
+          alert('SESSION OAUTH DÉTECTÉE ! Email: ' + session.user.email);
             const user = session.user;
             const pendingUsername = localStorage.getItem('pending_username');
             
@@ -373,6 +374,7 @@ setTimeout(function() {
             }
         } else {
             console.log('ℹ️ Pas de session OAuth');
+          alert('PAS DE SESSION OAUTH !');
         }
     }
 
