@@ -196,7 +196,10 @@
     setInterval(updateMenu, 1000);
   </script>
 
-  <!-- OAuth Handler Global (V-5) -->
+
+
+
+  <!-- OAuth Handler Global (V-6) -->
   <script>
     // Gérer l'authentification OAuth sur toutes les pages
     setTimeout(async function() {
@@ -205,20 +208,36 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
-        supabase.auth.onAuthStateChange(async (event, session) => {
-          console.log('🔔 [INDEX] Auth state change:', event);
+        console.log('🔍 [V-6] Vérification URL pour tokens OAuth...');
+        console.log('URL complète:', window.location.href);
+        
+        // Vérifier si on a des paramètres OAuth dans l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasAuthCode = urlParams.has('code');
+        
+        if (hasAuthCode) {
+          console.log('✅ [V-6] Code OAuth détecté dans URL !');
           
-          if (event === 'SIGNED_IN' && session) {
-            console.log('✅ [INDEX] SIGNED IN détecté !');
-            
-            const user = session.user;
-            const pendingUsername = localStorage.getItem('pending_username');
-            
-            if (!pendingUsername) {
-              console.log('ℹ️ Pas de pending username, c\'est une connexion');
-              return;
-            }
-            
+          // Attendre que Supabase traite les tokens
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+        
+        // Vérifier la session
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        console.log('📋 [V-6] Session:', session ? 'OUI' : 'NON');
+        if (error) console.error('❌ Erreur getSession:', error);
+        
+        if (session) {
+          console.log('✅ [V-6] SESSION TROUVÉE !');
+          console.log('Email:', session.user.email);
+          
+          const user = session.user;
+          const pendingUsername = localStorage.getItem('pending_username');
+          
+          console.log('💾 Pending username:', pendingUsername);
+          
+          if (pendingUsername) {
             // Vérifier si le compte existe
             const { data: existing } = await supabase
               .from('profiles')
@@ -261,17 +280,28 @@
               
               alert('✅ Compte créé avec succès !');
               
+              // Nettoyer l'URL
+              window.history.replaceState({}, '', window.location.pathname);
+              
               if (window.router) {
                 setTimeout(() => {
                   window.router.navigateTo('accueil');
                 }, 1000);
               }
+            } else {
+              console.log('ℹ️ Compte existe déjà');
+              localStorage.removeItem('pending_username');
             }
           }
-        });
+        } else {
+          console.log('ℹ️ [V-6] Pas de session');
+        }
       }
-    }, 1000);
+    }, 1500);
   </script>
+
+
+  
 
   
   <!-- Router SOSGOUV -->
