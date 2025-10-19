@@ -1,4 +1,4 @@
-<!-- Page de création de compte V-4 - Bug OAuth Gmail CORRIGÉ -->
+<!-- Page de création de compte V-5 - OAuth FIXÉ avec onAuthStateChange -->
 
 <div class="page compte">
   <div class="div-block-232">
@@ -77,7 +77,7 @@
 
 <!-- Badge de version -->
 <div style="position: fixed; bottom: 20px; left: 20px; background: #aca69a; color: white; padding: 5px 10px; border-radius: 3px; font-size: 10px; font-weight: 700; z-index: 9999;">
-  V-4
+  V-5
 </div>
 
 <!-- Supabase Auth -->
@@ -102,11 +102,13 @@ setTimeout(function() {
 
     window.showError = function(elementId, message) {
         const el = document.getElementById(elementId);
-        el.textContent = message;
-        el.style.display = 'block';
-        setTimeout(() => {
-            el.style.display = 'none';
-        }, 5000);
+        if (el) {
+            el.textContent = message;
+            el.style.display = 'block';
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 5000);
+        }
     };
 
     window.showSuccess = function(message) {
@@ -164,7 +166,6 @@ setTimeout(function() {
 
             window.showSuccess('Compte créé ! Connectez-vous maintenant.');
             
-            // Rediriger vers connexion
             setTimeout(() => {
                 if (window.router) {
                     window.router.navigateTo('connect-1');
@@ -223,7 +224,6 @@ setTimeout(function() {
 
             window.showSuccess('Compte créé ! Connectez-vous maintenant.');
             
-            // Rediriger vers connexion
             setTimeout(() => {
                 if (window.router) {
                     window.router.navigateTo('connect-1');
@@ -236,7 +236,7 @@ setTimeout(function() {
         }
     };
 
-    // CRÉATION COMPTE AVEC GMAIL (V-4 CORRIGÉ)
+    // CRÉATION COMPTE AVEC GMAIL (V-5 CORRIGÉ)
     window.handleGmailSignup = async function() {
         const username = document.getElementById('gmailUsername').value.trim();
 
@@ -257,11 +257,11 @@ setTimeout(function() {
                 return;
             }
 
-            // Stocker le username temporairement pour l'utiliser après OAuth
+            // Stocker le username temporairement
             localStorage.setItem('pending_username', username);
             console.log('💾 Username sauvegardé:', username);
 
-            // Lancer l'authentification Google
+            // Lancer l'authentification Google (redirect vers URL de base)
             const redirectUrl = window.location.origin + window.location.pathname;
             console.log('🔗 Redirect URL:', redirectUrl);
             
@@ -280,20 +280,14 @@ setTimeout(function() {
         }
     };
 
-    // Gestion du retour OAuth (V-4 CORRIGÉ)
-    async function handleGoogleCallback() {
-        console.log('🔍 Vérification callback OAuth...');
+    // NOUVEAU: Écouter les changements d'état d'authentification (V-5)
+    supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log('🔔 Auth state change:', event);
         
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-            console.error('Erreur session:', sessionError);
-            return;
-        }
-        
-        if (session) {
-            console.log('✅ Session OAuth détectée');
-          alert('SESSION OAUTH DÉTECTÉE ! Email: ' + session.user.email);
+        if (event === 'SIGNED_IN' && session) {
+            console.log('✅ SIGNED IN détecté !');
+            alert('SESSION OAUTH DÉTECTÉE ! Email: ' + session.user.email);
+            
             const user = session.user;
             const pendingUsername = localStorage.getItem('pending_username');
             
@@ -314,7 +308,7 @@ setTimeout(function() {
             if (!existing && pendingUsername) {
                 console.log('🆕 Création du profil...');
                 
-                // Créer le profil avec GESTION D'ERREUR
+                // Créer le profil
                 const { data: newProfile, error: insertError } = await supabase
                     .from('profiles')
                     .insert([{
@@ -328,9 +322,8 @@ setTimeout(function() {
 
                 if (insertError) {
                     console.error('❌ ERREUR INSERTION:', insertError);
-                    window.showError('gmailError', 'Erreur lors de la création du compte: ' + insertError.message);
+                    alert('Erreur lors de la création du compte: ' + insertError.message);
                     
-                    // Nettoyer
                     await supabase.auth.signOut();
                     localStorage.removeItem('pending_username');
                     return;
@@ -345,7 +338,6 @@ setTimeout(function() {
                     auth_method: 'google'
                 };
                 
-                // Stocker la session
                 localStorage.setItem('sosgouv_user', JSON.stringify(currentUser));
                 localStorage.removeItem('pending_username');
                 
@@ -353,7 +345,6 @@ setTimeout(function() {
                 
                 window.showSuccess('Compte créé avec succès !');
                 
-                // Rediriger vers l'accueil
                 if (window.router) {
                     setTimeout(() => {
                         window.router.navigateTo('accueil');
@@ -361,27 +352,32 @@ setTimeout(function() {
                 }
             } else if (existing) {
                 console.log('ℹ️ Compte déjà existant');
-                window.showError('gmailError', 'Ce compte existe déjà. Connectez-vous !');
                 localStorage.removeItem('pending_username');
-                setTimeout(() => {
-                    if (window.router) {
-                        window.router.navigateTo('connect-1');
-                    }
-                }, 2000);
-            } else {
-                console.log('⚠️ Pas de pending username');
-                window.showError('gmailError', 'Erreur: nom d\'utilisateur manquant');
+                
+                // C'est une connexion, pas une création
+                const currentUser = {
+                    id: existing.id,
+                    username: existing.username,
+                    email: existing.email,
+                    auth_method: existing.auth_method
+                };
+                
+                localStorage.setItem('sosgouv_user', JSON.stringify(currentUser));
+                
+                window.showSuccess('Connexion réussie !');
+                
+                if (window.router) {
+                    setTimeout(() => {
+                        window.router.navigateTo('accueil');
+                    }, 1000);
+                }
             }
         } else {
-            console.log('ℹ️ Pas de session OAuth');
-          alert('PAS DE SESSION OAUTH !');
+            console.log('ℹ️ Pas de SIGNED_IN, event:', event);
         }
-    }
+    });
 
-    // Exécuter le callback immédiatement
-    handleGoogleCallback();
-
-    console.log('✅ Page connect-2 V-4 chargée');
+    console.log('✅ Page connect-2 V-5 chargée');
 
 }, 500);
 </script>
