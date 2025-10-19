@@ -196,7 +196,9 @@
     setInterval(updateMenu, 1000);
   </script>
   
-  <!-- OAuth Handler Global (V-7) -->
+
+
+  <!-- OAuth Handler Global (V-7.1) -->
   <script>
     // Gérer l'authentification OAuth sur toutes les pages
     setTimeout(async function() {
@@ -205,99 +207,52 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
-        console.log('🔍 [V-7] Vérification session OAuth...');
+        console.log('🔍 [V-7.1] Initialisation OAuth listener...');
         
-        // Vérifier la session
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        console.log('📋 [V-7] Session:', session ? 'OUI' : 'NON');
-        if (error) console.error('❌ Erreur getSession:', error);
-        
-        if (session) {
-          console.log('✅ [V-7] SESSION TROUVÉE !');
-          console.log('Email:', session.user.email);
+        // Écouter les changements d'état d'authentification
+        supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log('🔔 [V-7.1] Auth event:', event);
           
-          const user = session.user;
-          const pendingUsername = localStorage.getItem('pending_username');
-          
-          console.log('💾 Pending username:', pendingUsername);
-          
-          // Le trigger a déjà créé le profil, on le récupère
-          const { data: existing, error: selectError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('email', user.email)
-            .single();
-          
-          if (selectError) {
-            console.error('❌ Erreur récupération profil:', selectError);
-            return;
-          }
-          
-          if (existing) {
-            console.log('✅ Profil existant trouvé:', existing);
+          if (event === 'SIGNED_IN' && session) {
+            console.log('✅ [V-7.1] SIGNED_IN détecté !');
+            console.log('Email:', session.user.email);
             
-            // Si on a un pending_username, on met à jour le profil
-            if (pendingUsername) {
-              console.log('🔄 Mise à jour du username...');
-              
-              const { error: updateError } = await supabase
-                .from('profiles')
-                .update({ 
-                  username: pendingUsername,
-                  auth_method: 'google'
-                })
-                .eq('id', user.id);
-              
-              if (updateError) {
-                console.error('❌ ERREUR UPDATE:', updateError);
-                alert('Erreur lors de la mise à jour: ' + updateError.message);
-                return;
-              }
-              
-              console.log('✅ Username mis à jour:', pendingUsername);
-              
-              // Stocker dans localStorage
-              localStorage.setItem('sosgouv_user', JSON.stringify({
-                id: user.id,
-                username: pendingUsername,
-                email: user.email,
-                auth_method: 'google'
-              }));
-              
-              localStorage.removeItem('pending_username');
-              
-              alert('✅ Compte créé avec succès !');
-              
-              // Nettoyer l'URL
-              window.history.replaceState({}, '', window.location.pathname);
-              
-              // Rediriger vers l'accueil
-              if (window.router) {
-                setTimeout(() => {
-                  window.router.navigateTo('accueil');
-                }, 1000);
-              }
-            } else {
-              // C'est une connexion (pas de pending_username)
-              console.log('ℹ️ Connexion avec compte existant');
-              
-              localStorage.setItem('sosgouv_user', JSON.stringify(existing));
-              
-              // Rediriger vers l'accueil
-              if (window.router) {
-                window.router.navigateTo('accueil');
-              }
+            const user = session.user;
+            const pendingUsername = localStorage.getItem('pending_username');
+            
+            console.log('💾 Pending username:', pendingUsername);
+            
+            // Récupérer le profil (créé par le trigger)
+            const { data: existing, error: selectError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('email', user.email)
+              .single();
+            
+            if (selectError) {
+              console.error('❌ Erreur récupération profil:', selectError);
+              return;
             }
-          } else {
-            console.log('⚠️ Aucun profil trouvé (bizarre, le trigger aurait dû le créer)');
-          }
-        } else {
-          console.log('ℹ️ [V-7] Pas de session OAuth');
-        }
-      }
-    }, 1500);
-  </script>
+            
+            if (existing) {
+              console.log('✅ Profil trouvé:', existing);
+              
+              // Si on a un pending_username, c'est une CRÉATION
+              if (pendingUsername) {
+                console.log('🔄 Mise à jour du username de', existing.username, 'vers', pendingUsername);
+                
+                const { error: updateError } = await supabase
+                  .from('profiles')
+                  .update({ 
+                    username: pendingUsername,
+                    auth_method: 'google'
+                  })
+                  .eq('id', user.id);
+                
+                if (updateError) {
+
+
+                  
   
   <!-- Router SOSGOUV -->
   <script src="router.js"></script>
