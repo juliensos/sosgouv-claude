@@ -124,7 +124,7 @@ setTimeout(function() {
     // CONNEXION GOOGLE (V-4 CORRIGÉ)
     window.handleGoogleLogin = async function() {
         try {
-            const redirectUrl = window.location.origin + window.location.pathname + '#connect-1';
+            const redirectUrl = window.location.origin + window.location.pathname;
             console.log('🔗 Google Login Redirect URL:', redirectUrl);
             
             const { data, error } = await supabase.auth.signInWithOAuth({
