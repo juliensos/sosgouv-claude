@@ -245,17 +245,56 @@
               .eq('email', user.email)
               .single();
             
-            if (!existing) {
-              console.log('🆕 Création du profil...');
-              
-              const { data: newProfile, error: insertError } = await supabase
-                .from('profiles')
-                .insert([{
-                  id: user.id,
-                  username: pendingUsername,
-                  email: user.email,
-                  auth_method: 'google'
-                }])
+// Le trigger a déjà créé le profil, on le met juste à jour avec le bon username
+const { data: existing } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('email', user.email)
+    .single();
+
+if (existing && pendingUsername) {
+    console.log('🔄 Mise à jour du username...');
+    
+    const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ username: pendingUsername })
+        .eq('id', user.id);
+    
+    if (updateError) {
+        console.error('❌ ERREUR UPDATE:', updateError);
+        alert('Erreur: ' + updateError.message);
+        return;
+    }
+    
+    console.log('✅ Username mis à jour:', pendingUsername);
+    
+    localStorage.setItem('sosgouv_user', JSON.stringify({
+        id: user.id,
+        username: pendingUsername,
+        email: user.email,
+        auth_method: 'google'
+    }));
+    
+    localStorage.removeItem('pending_username');
+    
+    alert('✅ Compte créé avec succès !');
+    
+    window.history.replaceState({}, '', window.location.pathname);
+    
+    if (window.router) {
+        setTimeout(() => {
+            window.router.navigateTo('accueil');
+        }, 1000);
+    }
+} else if (existing) {
+    console.log('ℹ️ Connexion avec compte existant');
+    localStorage.setItem('sosgouv_user', JSON.stringify(existing));
+    
+    if (window.router) {
+        window.router.navigateTo('accueil');
+    }
+
+      
                 .select()
                 .single();
               
