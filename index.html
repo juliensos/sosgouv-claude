@@ -211,7 +211,7 @@
         supabase.auth.onAuthStateChange(async (event, session) => {
           console.log('🔔 [V-7.1] Auth event:', event);
           
-          if (event === 'SIGNED_IN' && session) {
+          if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
             console.log('✅ [V-7.1] SIGNED_IN détecté !');
             console.log('Email:', session.user.email);
             
