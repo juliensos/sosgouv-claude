@@ -195,6 +195,84 @@
     // Vérifier périodiquement si l'utilisateur s'est connecté
     setInterval(updateMenu, 1000);
   </script>
+
+  <!-- OAuth Handler Global (V-5) -->
+  <script>
+    // Gérer l'authentification OAuth sur toutes les pages
+    setTimeout(async function() {
+      if (typeof window.supabase !== 'undefined') {
+        const SUPABASE_URL = 'https://ubttetrqvvbcgvwjbylr.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log('🔔 [INDEX] Auth state change:', event);
+          
+          if (event === 'SIGNED_IN' && session) {
+            console.log('✅ [INDEX] SIGNED IN détecté !');
+            
+            const user = session.user;
+            const pendingUsername = localStorage.getItem('pending_username');
+            
+            if (!pendingUsername) {
+              console.log('ℹ️ Pas de pending username, c\'est une connexion');
+              return;
+            }
+            
+            // Vérifier si le compte existe
+            const { data: existing } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('email', user.email)
+              .single();
+            
+            if (!existing) {
+              console.log('🆕 Création du profil...');
+              
+              const { data: newProfile, error: insertError } = await supabase
+                .from('profiles')
+                .insert([{
+                  id: user.id,
+                  username: pendingUsername,
+                  email: user.email,
+                  auth_method: 'google'
+                }])
+                .select()
+                .single();
+              
+              if (insertError) {
+                console.error('❌ ERREUR INSERTION:', insertError);
+                alert('Erreur: ' + insertError.message);
+                await supabase.auth.signOut();
+                localStorage.removeItem('pending_username');
+                return;
+              }
+              
+              console.log('✅ Profil créé:', newProfile);
+              
+              localStorage.setItem('sosgouv_user', JSON.stringify({
+                id: user.id,
+                username: pendingUsername,
+                email: user.email,
+                auth_method: 'google'
+              }));
+              
+              localStorage.removeItem('pending_username');
+              
+              alert('✅ Compte créé avec succès !');
+              
+              if (window.router) {
+                setTimeout(() => {
+                  window.router.navigateTo('accueil');
+                }, 1000);
+              }
+            }
+          }
+        });
+      }
+    }, 1000);
+  </script>
+
   
   <!-- Router SOSGOUV -->
   <script src="router.js"></script>
