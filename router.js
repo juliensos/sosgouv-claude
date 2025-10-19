@@ -7,7 +7,7 @@ class Router {
   constructor() {
     this.container = document.querySelector('._w-body');
     this.routes = {
-      'accueil': 'pages/page-accueil-temp.html',
+      'accueil': 'pages/page-gouv-publies.html',
       'connect': 'pages/connect.html',
       'connect-1': 'pages/connect-1.html',
       'connect-2': 'pages/connect-2.html',
