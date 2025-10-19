@@ -1,23 +1,73 @@
 <!-- ============================================ -->
-<!-- SOS-GOUV - Page Gouvernements Publiés -->
+<!-- SOS-GOUV - Page Gouvernements Publiés (CORRIGÉE) -->
 <!-- Affiche la liste des gouvernements depuis Supabase -->
 <!-- ============================================ -->
+
+<style>
+/* Fontello Icons */
+@font-face {
+  font-family: 'fontello';
+  src: url('./fonts/fontello.woff2?98826985') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+[class^="icon-"]:before, [class*=" icon-"]:before {
+  font-family: "fontello";
+  font-style: normal;
+  font-weight: normal;
+  speak: never;
+  display: inline-block;
+  text-decoration: inherit;
+  width: 1em;
+  margin-right: .2em;
+  text-align: center;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1em;
+  margin-left: .2em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-paper-plane:before { content: '\e800'; }
+.icon-search:before { content: '\e801'; }
+.icon-heart:before { content: '\e802'; }
+.icon-heart-filled:before { content: '\e803'; }
+.icon-heart-empty:before { content: '\e808'; }
+.icon-pin:before { content: '\e80a'; }
+.icon-pin-outline:before { content: '\e80b'; }
+.icon-user:before { content: '\e818'; }
+.icon-star:before { content: '\e816'; }
+.icon-star-filled:before { content: '\e817'; }
+.icon-star-empty:before { content: '\e807'; }
+.icon-mail:before { content: '\e826'; }
+.icon-eye:before { content: '\e84a'; }
+.icon-plus:before { content: '\e823'; }
+.icon-list:before { content: '\e84e'; }
+.icon-cancel:before { content: '\e805'; }
+
+/* Nowrap utility */
+.nowrap {
+  white-space: nowrap;
+}
+</style>
 
 <div class="page gouv-publi-s">
   <div class="div-govglobal">
     
-    <!-- Menu boutons -->
+    <!-- Menu boutons (LIENS CORRIGÉS) -->
     <div class="div-gov-menu">
-      <a href="#" data-page="gouvernements" class="_w-link-bloc-button w-inline-block">
-        <div class="text-block-52">📝</div>
+      <a href="page-ajouter-gouvernement.html" class="_w-link-bloc-button w-inline-block">
+        <div class="text-block-52"><i class="icon-plus"></i></div>
         <div>ajouter un gouvernement</div>
       </a>
-      <a href="#" data-page="personnalites" class="_w-link-bloc-button w-inline-block">
-        <div class="text-block-52">👤</div>
+      <a href="page-ajouter-perso.html" class="_w-link-bloc-button w-inline-block">
+        <div class="text-block-52"><i class="icon-user"></i></div>
         <div>ajouter une personnalité</div>
       </a>
       <a href="#" data-page="personnalites" class="_w-link-bloc-button blanc w-inline-block">
-        <div class="text-block-52">📋</div>
+        <div class="text-block-52"><i class="icon-list"></i></div>
         <div>Liste personnalités</div>
       </a>
     </div>
@@ -32,21 +82,20 @@
       <!-- Dropdown Type -->
       <div data-hover="false" data-delay="0" class="dropdown-4-copy w-dropdown">
         <div class="_w-dropdown-copy w-dropdown-toggle">
-          <div class="fontello-icon grey">⚙</div>
+          <div class="fontello-icon grey"><i class="icon-list"></i></div>
           <div>Type</div>
         </div>
         <nav class="dropdown-list-4 w-dropdown-list">
           <a href="#" class="_w-dropdown-left _0 w-dropdown-link" onclick="setFilter('type', 'all'); return false;">Tous</a>
           <a href="#" class="_w-dropdown-left w-dropdown-link" onclick="setFilter('type', 'classique'); return false;">Classique</a>
           <a href="#" class="_w-dropdown-left w-dropdown-link" onclick="setFilter('type', 'hybride'); return false;">Hybride</a>
-          <a href="#" class="_w-dropdown-left _2 w-dropdown-link" onclick="setFilter('type', 'cadavre'); return false;">Cadavre exquis</a>
         </nav>
       </div>
 
       <!-- Dropdown Trier par -->
       <div data-hover="false" data-delay="0" class="dropdown-4-copy w-dropdown">
         <div class="_w-dropdown-copy w-dropdown-toggle">
-          <div class="fontello-icon grey">⚙</div>
+          <div class="fontello-icon grey"><i class="icon-list"></i></div>
           <div>Trier par</div>
         </div>
         <nav class="w-dropdown-list">
@@ -72,18 +121,20 @@
     <!-- Container des gouvernements -->
     <div id="governmentsContainer">
       <div style="padding: 40px; text-align: center; color: var(--sos-grey-1);">
-        ⏳ Chargement des gouvernements...
+        <i class="icon-search" style="font-size: 24px;"></i> Chargement des gouvernements...
       </div>
     </div>
 
   </div>
 </div>
 
-<!-- Modal Détails -->
+<!-- Modal Détails (REFAIT AVEC LES CODES GRAPHIQUES DU BLOC GOV) -->
 <div id="modalDetails" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; overflow-y: auto; padding: 20px;">
-  <div style="max-width: 800px; margin: 40px auto; background: white; border-radius: 10px; position: relative;">
-    <button onclick="closeModal()" style="position: absolute; top: 15px; right: 15px; background: var(--red); color: white; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 20px; font-weight: bold;">×</button>
-    <div id="modalContent" style="padding: 40px;">
+  <div style="max-width: 900px; margin: 40px auto; background: white; border-radius: 10px; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+    <button onclick="closeModal()" style="position: absolute; top: 15px; right: 15px; background: var(--red); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; z-index: 10000;">
+      <i class="icon-cancel"></i>
+    </button>
+    <div id="modalContent" style="padding: 0;">
       <!-- Contenu généré dynamiquement -->
     </div>
   </div>
@@ -140,7 +191,7 @@ async function loadPersonalities() {
 }
 
 // ============================================
-// Charger les gouvernements
+// Charger les gouvernements (SANS DONNÉES DE TEST)
 // ============================================
 async function loadGovernments() {
   try {
@@ -151,9 +202,11 @@ async function loadGovernments() {
     
     if (govError) throw govError;
     
+    // Si aucun gouvernement, on affiche juste un message
     if (!govData || govData.length === 0) {
-      console.log('ℹ️ Aucun gouvernement trouvé, création de données de test...');
-      await createTestData();
+      console.log('ℹ️ Aucun gouvernement trouvé');
+      allGovernments = [];
+      applyFilters();
       return;
     }
     
@@ -175,74 +228,6 @@ async function loadGovernments() {
     console.error('❌ Erreur chargement gouvernements:', error);
     showError();
   }
-}
-
-// ============================================
-// Créer des données de test
-// ============================================
-async function createTestData() {
-  console.log('📝 Création de données de test...');
-  
-  // Créer quelques personnalités de test si aucune n'existe
-  if (allPersonalities.length === 0) {
-    const testPersonalities = [
-      { name: 'Dupont', firstname: 'Jean', profession: 'Économiste', nombre_likes: 150 },
-      { name: 'Martin', firstname: 'Marie', profession: 'Juriste', nombre_likes: 120 },
-      { name: 'Bernard', firstname: 'Pierre', profession: 'Ingénieur', nombre_likes: 90 }
-    ];
-    
-    for (let p of testPersonalities) {
-      const { data } = await supabase.from('personalities').insert(p).select().single();
-      if (data) allPersonalities.push(data);
-    }
-  }
-  
-  // Créer 2 gouvernements de test
-  const testGovs = [
-    {
-      name: 'Gouvernement de Transition',
-      type: 'classique',
-      status: 'public',
-      comment: 'Un gouvernement axé sur la transition écologique et la justice sociale.',
-      rating: 4.5
-    },
-    {
-      name: 'Gouvernement du Renouveau',
-      type: 'hybride',
-      status: 'public',
-      comment: 'Pour une France innovante et inclusive.',
-      rating: 4.2
-    }
-  ];
-  
-  for (let gov of testGovs) {
-    const { data: newGov, error } = await supabase
-      .from('governments')
-      .insert(gov)
-      .select()
-      .single();
-    
-    if (newGov && allPersonalities.length > 0) {
-      // Ajouter quelques positions
-      await supabase.from('government_positions').insert([
-        {
-          government_id: newGov.id,
-          personality_id: allPersonalities[0].id,
-          sector: 'Matignon',
-          title: 'Premier ministre'
-        },
-        {
-          government_id: newGov.id,
-          personality_id: allPersonalities[1].id,
-          sector: 'Justice',
-          title: 'Garde des Sceaux'
-        }
-      ]);
-    }
-  }
-  
-  // Recharger
-  await loadGovernments();
 }
 
 // ============================================
@@ -317,6 +302,9 @@ function renderGovernments(governments) {
         <div style="font-size: 48px; margin-bottom: 20px;">🏛️</div>
         <h3>Aucun gouvernement trouvé</h3>
         <p>Soyez le premier à créer un gouvernement !</p>
+        <a href="page-ajouter-gouvernement.html" style="display: inline-block; margin-top: 20px; background: var(--sos-yellow); color: #000; padding: 12px 24px; border-radius: 5px; text-decoration: none; font-weight: bold;">
+          <i class="icon-plus"></i> Créer un gouvernement
+        </a>
       </div>
     `;
     return;
@@ -326,17 +314,17 @@ function renderGovernments(governments) {
 }
 
 // ============================================
-// Rendu d'une carte gouvernement
+// Rendu d'une carte gouvernement (ICÔNES FONTELLO + NOWRAP)
 // ============================================
 function renderGovernmentCard(gov) {
   const totalLikes = calculateTotalLikes(gov);
   const isPinned = pinnedGovs.includes(gov.id);
   const date = new Date(gov.created_at).toLocaleDateString('fr-FR');
   
-  // Statut et type
+  // Statut et type (NOWRAP CORRIGÉ)
   const statusBadge = gov.status === 'public' 
-    ? '<div class="_w-courant _w-bold _w-vert">Prêt à gouverner</div>'
-    : '<div class="_w-courant _w-grey">En attente</div>';
+    ? '<div class="nowrap _w-courant _w-bold _w-vert">Prêt à gouverner</div>'
+    : '<div class="nowrap _w-courant _w-grey">En attente</div>';
   
   const typeClass = gov.type === 'classique' ? 'classique' : 
                    gov.type === 'hybride' ? 'fiche' : 'note-moy';
@@ -360,9 +348,11 @@ function renderGovernmentCard(gov) {
     `;
   }).join('');
   
-  // Note moyenne
+  // Note moyenne (NOWRAP AJOUTÉ)
   const rating = gov.rating || 0;
-  const stars = '⭐'.repeat(Math.round(rating));
+  const starsHTML = Array(5).fill(0).map((_, i) => 
+    i < Math.round(rating) ? '<i class="icon-star-filled"></i>' : '<i class="icon-star-empty"></i>'
+  ).join('');
   
   return `
     <div class="gov-bloc">
@@ -371,7 +361,7 @@ function renderGovernmentCard(gov) {
         <div class="bloc-en-tete">
           <h4 class="heading-4">${gov.name}</h4>
           <div class="_w-courant-div">
-            <div class="_w-courant _w-bold _w-pink">${rating.toFixed(1)} / 5</div>
+            <div class="nowrap _w-courant _w-bold _w-pink">${rating.toFixed(1)} / 5</div>
             ${statusBadge}
           </div>
         </div>
@@ -386,12 +376,12 @@ function renderGovernmentCard(gov) {
         <!-- Membres (max 5) -->
         <div class="membres">
           ${membersHTML}
-          ${hasMore ? `<div class="_w-courant _w-grey" style="margin-top: 10px;">+ ${positions.length - 5} autres membres...</div>` : ''}
+          ${hasMore ? `<div class="_w-courant _w-grey" style="margin-top: 10px;"><i class="icon-user"></i> + ${positions.length - 5} autres membres...</div>` : ''}
         </div>
         
         <!-- Bouton Détail -->
         <div class="detail" onclick="showDetails('${gov.id}')">
-          <div class="fontello-white">👁</div>
+          <div class="fontello-white"><i class="icon-eye"></i></div>
           <div class="mini-current mini-bold black">Détail</div>
         </div>
       </div>
@@ -401,13 +391,13 @@ function renderGovernmentCard(gov) {
         <div class="infos">
           <!-- Étoiles -->
           <div class="_w-courant-div">
-            <div class="fontello-rose">${stars}</div>
+            <div class="fontello-rose">${starsHTML}</div>
           </div>
           
           <!-- Nombre de votes -->
           <div class="_w-courant-div">
             <div class="_w-courant _w-mini _w-white">Nombre de votes</div>
-            <div class="_w-courant _w-bold _w-pink">500</div>
+            <div class="_w-courant _w-bold _w-pink"><i class="icon-heart-filled"></i> ${Object.keys(userVotes).filter(k => k === gov.id).length}</div>
           </div>
           
           <!-- Type -->
@@ -419,26 +409,26 @@ function renderGovernmentCard(gov) {
           <!-- Date et auteur -->
           <div class="_w-courant-div">
             <div class="_w-courant _w-mini _w-white">Publié le ${date} par</div>
-            <a href="#" class="_w-user">utilisateur</a>
+            <a href="#" class="_w-user"><i class="icon-user"></i> utilisateur</a>
           </div>
           
           <!-- Likes totaux -->
           ${totalLikes > 0 ? `
             <div class="_w-courant-div">
               <div class="_w-courant _w-mini">Likes cumulés</div>
-              <div class="_w-courant _w-bold _w-pink">${totalLikes}</div>
+              <div class="_w-courant _w-bold _w-pink"><i class="icon-heart"></i> ${totalLikes}</div>
             </div>
           ` : ''}
         </div>
         
-        <!-- Actions -->
+        <!-- Actions (ICÔNES FONTELLO) -->
         <div class="send-et-pin">
           <div class="envoyer" onclick="shareByEmail('${gov.id}')">
-            <div class="fontello-white">📧</div>
+            <div class="fontello-white"><i class="icon-paper-plane"></i></div>
             <div class="mini-current mini-bold">Envoyer</div>
           </div>
           <div class="envoyer" onclick="togglePin('${gov.id}')" style="background-color: ${isPinned ? 'var(--sos-green)' : '#000'};">
-            <div class="fontello-white">${isPinned ? '✓' : '📌'}</div>
+            <div class="fontello-white"><i class="${isPinned ? 'icon-pin' : 'icon-pin-outline'}"></i></div>
             <div class="mini-current mini-bold">${isPinned ? 'Épinglé' : 'Épingler'}</div>
           </div>
         </div>
@@ -448,7 +438,7 @@ function renderGovernmentCard(gov) {
 }
 
 // ============================================
-// Afficher les détails (modal)
+// Afficher les détails (MODAL REFAIT AVEC CODES GOV BLOC)
 // ============================================
 function showDetails(govId) {
   const gov = allGovernments.find(g => g.id === govId);
@@ -456,47 +446,99 @@ function showDetails(govId) {
   
   const positions = gov.positions || [];
   const totalLikes = calculateTotalLikes(gov);
-  const date = new Date(gov.created_at).toLocaleDateString('fr-FR', { 
-    year: 'numeric', month: 'long', day: 'numeric' 
-  });
+  const date = new Date(gov.created_at).toLocaleDateString('fr-FR');
+  const rating = gov.rating || 0;
   
+  // Stars
+  const starsHTML = Array(5).fill(0).map((_, i) => 
+    i < Math.round(rating) ? '<i class="icon-star-filled"></i>' : '<i class="icon-star-empty"></i>'
+  ).join('');
+  
+  // Status badge
+  const statusBadge = gov.status === 'public' 
+    ? '<div class="nowrap _w-courant _w-bold _w-vert">Prêt à gouverner</div>'
+    : '<div class="nowrap _w-courant _w-grey">En attente</div>';
+  
+  // Type class
+  const typeClass = gov.type === 'classique' ? 'classique' : 
+                   gov.type === 'hybride' ? 'fiche' : 'note-moy';
+  
+  // Members list
   const membersHTML = positions.map(pos => {
     const pers = allPersonalities.find(p => p.id === pos.personality_id);
     if (!pers) return '';
     
     return `
-      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--color);">
-        <div style="font-weight: bold; color: #333; font-size: 1.1em;">${pers.firstname} ${pers.name}</div>
-        <div style="color: #666; margin-top: 5px;">
-          <strong>${pos.sector}</strong> - ${pos.title}
-          ${pos.custom_title ? `<br><em>En charge de : ${pos.custom_title}</em>` : ''}
-          ${pers.nombre_likes ? `<br><span style="background: var(--color); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.85em;">❤️ ${pers.nombre_likes} likes</span>` : ''}
+      <div class="_w-courant-div" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+        <div class="_w-courant _w-bold" style="font-size: 1.1em;">${pers.firstname} ${pers.name}</div>
+        <div class="div-block-214">
+          <div class="_w-courant _w-grey">${pos.sector} - ${pos.title}</div>
+          ${pos.subsectors && pos.subsectors.length > 0 ? `<div class="_w-courant _w-mini" style="margin-top: 5px;"><em>Sous-secteurs: ${pos.subsectors.join(', ')}</em></div>` : ''}
+          ${pers.nombre_likes ? `<div class="_w-courant _w-mini" style="margin-top: 5px;"><i class="icon-heart"></i> ${pers.nombre_likes} likes</div>` : ''}
         </div>
       </div>
     `;
   }).join('');
   
+  // Modal content using gov-bloc structure
   document.getElementById('modalContent').innerHTML = `
-    <h2 style="color: var(--color); margin-bottom: 10px;">${gov.name}</h2>
-    <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; font-size: 0.9em;">
-      <span>📅 ${date}</span>
-      <span style="background: var(--sos-yellow2); padding: 3px 10px; border-radius: 15px; font-weight: bold;">${gov.type.toUpperCase()}</span>
-      <span>⭐ ${(gov.rating || 0).toFixed(1)}/5</span>
-      ${totalLikes > 0 ? `<span style="background: var(--color); color: white; padding: 3px 10px; border-radius: 15px;">❤️ ${totalLikes} likes cumulés</span>` : ''}
-    </div>
-    
-    ${gov.comment ? `
-      <div style="background: #fff9e6; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--sos-yellow);">
-        <h3 style="color: var(--color); margin-bottom: 10px;">💬 Vision de l'auteur</h3>
-        <p style="color: #555; line-height: 1.6; margin: 0;">${gov.comment}</p>
+    <div class="gov-bloc" style="border-radius: 10px; overflow: hidden; margin: 0;">
+      <div class="bloc-gov-list" style="padding: 30px;">
+        <!-- En-tête -->
+        <div class="bloc-en-tete">
+          <h4 class="heading-4">${gov.name}</h4>
+          <div class="_w-courant-div">
+            <div class="nowrap _w-courant _w-bold _w-pink">${rating.toFixed(1)} / 5</div>
+            ${statusBadge}
+          </div>
+        </div>
+        
+        <!-- Description -->
+        ${gov.comment ? `
+          <div class="descript" style="background: #fff9e6; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid var(--sos-yellow);">
+            <h3 style="margin: 0 0 10px 0; color: var(--color);"><i class="icon-chat"></i> Vision de l'auteur</h3>
+            <p class="paragraph-2" style="margin: 0;">${gov.comment}</p>
+          </div>
+        ` : ''}
+        
+        <!-- Membres complets -->
+        <div class="membres">
+          <h3 style="margin: 20px 0 15px 0; color: var(--color); border-bottom: 2px solid #e0e0e0; padding-bottom: 10px;">
+            <i class="icon-user"></i> Composition du Gouvernement (${positions.length})
+          </h3>
+          ${membersHTML}
+        </div>
       </div>
-    ` : ''}
-    
-    <div>
-      <h3 style="color: var(--color); margin-bottom: 15px; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px;">
-        👥 Composition du Gouvernement (${positions.length})
-      </h3>
-      ${membersHTML}
+      
+      <!-- Infos -->
+      <div class="block-gov-infos">
+        <div class="infos">
+          <!-- Étoiles -->
+          <div class="_w-courant-div">
+            <div class="fontello-rose">${starsHTML}</div>
+          </div>
+          
+          <!-- Type -->
+          <div class="_w-courant-div">
+            <div class="_w-courant _w-mini">Type</div>
+            <div class="mini-current ${typeClass}">${gov.type}</div>
+          </div>
+          
+          <!-- Date -->
+          <div class="_w-courant-div">
+            <div class="_w-courant _w-mini _w-white">Publié le</div>
+            <div class="_w-courant _w-bold">${date}</div>
+          </div>
+          
+          <!-- Likes totaux -->
+          ${totalLikes > 0 ? `
+            <div class="_w-courant-div">
+              <div class="_w-courant _w-mini">Likes cumulés</div>
+              <div class="_w-courant _w-bold _w-pink"><i class="icon-heart"></i> ${totalLikes}</div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
     </div>
   `;
   
@@ -559,12 +601,12 @@ function shareByEmail(govId) {
 function showError() {
   document.getElementById('governmentsContainer').innerHTML = `
     <div style="padding: 40px; text-align: center;">
-      <h3 style="color: var(--red); margin-bottom: 20px;">❌ Erreur de chargement</h3>
+      <h3 style="color: var(--red); margin-bottom: 20px;"><i class="icon-cancel"></i> Erreur de chargement</h3>
       <p style="color: var(--sos-grey-1); margin-bottom: 20px;">
         Impossible de charger les gouvernements depuis Supabase
       </p>
       <button onclick="init()" style="background: var(--sos-yellow); color: #000; padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold;">
-        ↻ Réessayer
+        <i class="icon-search"></i> Réessayer
       </button>
     </div>
   `;
