@@ -196,8 +196,6 @@
     setInterval(updateMenu, 1000);
   </script>
   
-
-
   <!-- OAuth Handler Global (V-7.1) -->
   <script>
     // Gérer l'authentification OAuth sur toutes les pages
@@ -250,9 +248,55 @@
                   .eq('id', user.id);
                 
                 if (updateError) {
-
-
-                  
+                  console.error('❌ ERREUR UPDATE:', updateError);
+                  alert('Erreur : ' + updateError.message);
+                  return;
+                }
+                
+                console.log('✅ Username mis à jour !');
+                
+                // Stocker dans localStorage avec le BON username
+                localStorage.setItem('sosgouv_user', JSON.stringify({
+                  id: user.id,
+                  username: pendingUsername,
+                  email: user.email,
+                  auth_method: 'google'
+                }));
+                
+                localStorage.removeItem('pending_username');
+                
+                alert('✅ Compte créé avec succès !');
+                
+                // Nettoyer l'URL
+                window.history.replaceState({}, '', window.location.pathname);
+                
+                // Rediriger
+                if (window.router) {
+                  setTimeout(() => {
+                    window.router.navigateTo('accueil');
+                  }, 1000);
+                }
+              } else {
+                // C'est une CONNEXION (pas de pending_username)
+                console.log('ℹ️ Connexion avec compte existant');
+                
+                localStorage.setItem('sosgouv_user', JSON.stringify(existing));
+                
+                alert('✅ Connexion réussie !');
+                
+                // Rediriger
+                if (window.router) {
+                  window.router.navigateTo('accueil');
+                }
+              }
+            }
+          }
+        });
+        
+        console.log('✅ [V-7.1] OAuth listener actif');
+      }
+    }, 500);
+  </script>
   
   <!-- Router SOSGOUV -->
   <script src="router.js"></script>
