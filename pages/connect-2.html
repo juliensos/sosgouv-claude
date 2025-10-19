@@ -265,12 +265,15 @@ setTimeout(function() {
             const redirectUrl = window.location.origin + window.location.pathname;
             console.log('🔗 Redirect URL:', redirectUrl);
             
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: redirectUrl
-                }
-            });
+           const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+        redirectTo: redirectUrl,
+        data: {
+            username: username
+        }
+    }
+});
 
             if (error) throw error;
 
