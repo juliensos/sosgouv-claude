@@ -1,5 +1,5 @@
 <!-- ============================================ -->
-<!-- SOS-GOUV - Page Gouvernements Publiés (CORRIGÉE) -->
+<!-- SOS-GOUV - Page Gouvernements Publiés (VERSION FINALE) -->
 <!-- Affiche la liste des gouvernements depuis Supabase -->
 <!-- ============================================ -->
 
@@ -31,25 +31,84 @@
 }
 
 .icon-paper-plane:before { content: '\e800'; }
-.icon-search:before { content: '\e801'; }
-.icon-heart:before { content: '\e802'; }
-.icon-heart-filled:before { content: '\e803'; }
 .icon-heart-empty:before { content: '\e808'; }
+.icon-heart-filled:before { content: '\e803'; }
 .icon-pin:before { content: '\e80a'; }
 .icon-pin-outline:before { content: '\e80b'; }
 .icon-user:before { content: '\e818'; }
-.icon-star:before { content: '\e816'; }
-.icon-star-filled:before { content: '\e817'; }
-.icon-star-empty:before { content: '\e807'; }
-.icon-mail:before { content: '\e826'; }
 .icon-eye:before { content: '\e84a'; }
 .icon-plus:before { content: '\e823'; }
 .icon-list:before { content: '\e84e'; }
 .icon-cancel:before { content: '\e805'; }
+.icon-search:before { content: '\e801'; }
 
 /* Nowrap utility */
 .nowrap {
   white-space: nowrap;
+}
+
+/* Style pour les selects natifs */
+.filter-select {
+  padding: 10px 35px 10px 15px;
+  border: 2px solid var(--sos-grey-3, #ddd);
+  border-radius: 5px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+}
+
+.filter-select:hover {
+  border-color: var(--sos-grey-2, #999);
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--color, #667eea);
+}
+
+/* Système de vote avec cœurs */
+.rating-hearts {
+  display: flex;
+  gap: 5px;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  font-size: 1.8em;
+}
+
+.rating-hearts input[type="radio"] {
+  display: none;
+}
+
+.rating-hearts label {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rating-hearts label i {
+  color: #ddd;
+}
+
+.rating-hearts input[type="radio"]:checked ~ label i,
+.rating-hearts label:hover i,
+.rating-hearts label:hover ~ label i {
+  color: #ff6b6b;
+}
+
+/* Lien personnalité */
+.personality-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.personality-link:hover {
+  color: var(--sos-pink, #ff6b6b);
+  text-decoration: underline;
 }
 </style>
 
@@ -77,33 +136,26 @@
       <h3 class="heading-3-gov">Gouvernements publiés</h3>
     </div>
 
-    <!-- Filtres -->
+    <!-- Filtres (SELECTS NATIFS) -->
     <div class="_w-selecta">
-      <!-- Dropdown Type -->
-      <div data-hover="false" data-delay="0" class="dropdown-4-copy w-dropdown">
-        <div class="_w-dropdown-copy w-dropdown-toggle">
-          <div class="fontello-icon grey"><i class="icon-list"></i></div>
-          <div>Type</div>
-        </div>
-        <nav class="dropdown-list-4 w-dropdown-list">
-          <a href="#" class="_w-dropdown-left _0 w-dropdown-link" onclick="setFilter('type', 'all'); return false;">Tous</a>
-          <a href="#" class="_w-dropdown-left w-dropdown-link" onclick="setFilter('type', 'classique'); return false;">Classique</a>
-          <a href="#" class="_w-dropdown-left w-dropdown-link" onclick="setFilter('type', 'hybride'); return false;">Hybride</a>
-        </nav>
+      <!-- Select Type -->
+      <div style="display: flex; flex-direction: column; gap: 5px;">
+        <label style="font-size: 12px; color: var(--sos-grey-1);">Type</label>
+        <select id="filterType" class="filter-select" onchange="applyFilters()">
+          <option value="all">Tous</option>
+          <option value="classique">Classique</option>
+          <option value="hybride">Hybride</option>
+        </select>
       </div>
 
-      <!-- Dropdown Trier par -->
-      <div data-hover="false" data-delay="0" class="dropdown-4-copy w-dropdown">
-        <div class="_w-dropdown-copy w-dropdown-toggle">
-          <div class="fontello-icon grey"><i class="icon-list"></i></div>
-          <div>Trier par</div>
-        </div>
-        <nav class="w-dropdown-list">
-          <a href="#" class="_w-dropdown-left _0 w-dropdown-link" onclick="setFilter('sort', 'recent'); return false;">Plus récents</a>
-          <a href="#" class="_w-dropdown-left w-dropdown-link" onclick="setFilter('sort', 'rating'); return false;">Mieux notés</a>
-          <a href="#" class="_w-dropdown-left w-dropdown-link" onclick="setFilter('sort', 'votes'); return false;">Plus votés</a>
-          <a href="#" class="_w-dropdown-left _2 w-dropdown-link" onclick="setFilter('sort', 'likes'); return false;">Popularité des membres</a>
-        </nav>
+      <!-- Select Trier par -->
+      <div style="display: flex; flex-direction: column; gap: 5px;">
+        <label style="font-size: 12px; color: var(--sos-grey-1);">Trier par</label>
+        <select id="sortBy" class="filter-select" onchange="applyFilters()">
+          <option value="recent">Plus récents</option>
+          <option value="rating">Mieux notés</option>
+          <option value="votes">Plus votés</option>
+        </select>
       </div>
 
       <!-- Checkbox Prêt à gouverner -->
@@ -160,7 +212,7 @@ let currentFilters = {
   pret: false
 };
 let pinnedGovs = JSON.parse(localStorage.getItem('sosgouv_pinned') || '[]');
-let userVotes = JSON.parse(localStorage.getItem('sosgouv_votes') || '{}');
+let userVotes = JSON.parse(localStorage.getItem('sosgouv_user_votes') || '{}');
 
 // ============================================
 // Initialisation
@@ -169,6 +221,17 @@ async function init() {
   console.log('🚀 Initialisation de la page gouvernements...');
   await loadPersonalities();
   await loadGovernments();
+  
+  // Gérer le checkbox visuellement
+  const checkbox = document.getElementById('filterPret');
+  const checkboxDiv = document.getElementById('filterPretCheckbox');
+  checkbox.addEventListener('change', function() {
+    if (this.checked) {
+      checkboxDiv.classList.add('w--redirected-checked');
+    } else {
+      checkboxDiv.classList.remove('w--redirected-checked');
+    }
+  });
 }
 
 // ============================================
@@ -218,6 +281,21 @@ async function loadGovernments() {
         .eq('government_id', gov.id);
       
       gov.positions = positions || [];
+      
+      // Charger le compte de votes depuis une table votes si elle existe
+      const { data: votes, error: votesError } = await supabase
+        .from('government_votes')
+        .select('rating')
+        .eq('government_id', gov.id);
+      
+      if (votes && votes.length > 0) {
+        const total = votes.reduce((sum, v) => sum + v.rating, 0);
+        gov.rating = total / votes.length;
+        gov.votes_count = votes.length;
+      } else {
+        gov.rating = gov.rating || 0;
+        gov.votes_count = 0;
+      }
     }
     
     allGovernments = govData;
@@ -233,61 +311,38 @@ async function loadGovernments() {
 // ============================================
 // Appliquer les filtres
 // ============================================
-function setFilter(type, value) {
-  currentFilters[type] = value;
-  applyFilters();
-}
-
 function applyFilters() {
-  currentFilters.pret = document.getElementById('filterPret').checked;
+  const filterType = document.getElementById('filterType').value;
+  const filterPret = document.getElementById('filterPret').checked;
+  const sortBy = document.getElementById('sortBy').value;
   
   let filtered = [...allGovernments];
   
   // Filtre par type
-  if (currentFilters.type !== 'all') {
-    filtered = filtered.filter(g => g.type === currentFilters.type);
+  if (filterType !== 'all') {
+    filtered = filtered.filter(g => g.type === filterType);
   }
   
   // Filtre prêt à gouverner
-  if (currentFilters.pret) {
+  if (filterPret) {
     filtered = filtered.filter(g => g.status === 'public');
   }
   
   // Tri
   filtered.sort((a, b) => {
-    switch (currentFilters.sort) {
+    switch (sortBy) {
       case 'recent':
         return new Date(b.created_at) - new Date(a.created_at);
       case 'rating':
         return (b.rating || 0) - (a.rating || 0);
       case 'votes':
-        const votesA = Object.keys(userVotes).filter(k => k.startsWith(a.id)).length;
-        const votesB = Object.keys(userVotes).filter(k => k.startsWith(b.id)).length;
-        return votesB - votesA;
-      case 'likes':
-        return calculateTotalLikes(b) - calculateTotalLikes(a);
+        return (b.votes_count || 0) - (a.votes_count || 0);
       default:
         return 0;
     }
   });
   
   renderGovernments(filtered);
-}
-
-// ============================================
-// Calculer les likes totaux
-// ============================================
-function calculateTotalLikes(gov) {
-  let total = 0;
-  if (gov.positions) {
-    gov.positions.forEach(pos => {
-      const pers = allPersonalities.find(p => p.id === pos.personality_id);
-      if (pers && pers.nombre_likes) {
-        total += pers.nombre_likes;
-      }
-    });
-  }
-  return total;
 }
 
 // ============================================
@@ -311,13 +366,20 @@ function renderGovernments(governments) {
   }
   
   container.innerHTML = governments.map(gov => renderGovernmentCard(gov)).join('');
+  
+  // Restaurer les votes de l'utilisateur
+  governments.forEach(gov => {
+    if (userVotes[gov.id]) {
+      const radio = document.getElementById(`vote-${gov.id}-${userVotes[gov.id]}`);
+      if (radio) radio.checked = true;
+    }
+  });
 }
 
 // ============================================
-// Rendu d'une carte gouvernement (ICÔNES FONTELLO + NOWRAP)
+// Rendu d'une carte gouvernement (CŒURS + LIENS PERSONNALITÉS)
 // ============================================
 function renderGovernmentCard(gov) {
-  const totalLikes = calculateTotalLikes(gov);
   const isPinned = pinnedGovs.includes(gov.id);
   const date = new Date(gov.created_at).toLocaleDateString('fr-FR');
   
@@ -329,7 +391,7 @@ function renderGovernmentCard(gov) {
   const typeClass = gov.type === 'classique' ? 'classique' : 
                    gov.type === 'hybride' ? 'fiche' : 'note-moy';
   
-  // Membres (max 5)
+  // Membres (max 5) AVEC LIENS
   const positions = gov.positions || [];
   const displayPositions = positions.slice(0, 5);
   const hasMore = positions.length > 5;
@@ -340,7 +402,9 @@ function renderGovernmentCard(gov) {
     
     return `
       <div class="_w-courant-div">
-        <div class="_w-courant _w-bold">${pers.firstname} ${pers.name}</div>
+        <a href="page-personalité.html?id=${pers.id}" class="personality-link" onclick="event.stopPropagation();">
+          <div class="_w-courant _w-bold">${pers.firstname} ${pers.name}</div>
+        </a>
         <div class="div-block-214">
           <div class="_w-courant _w-grey">${pos.title}</div>
         </div>
@@ -350,8 +414,11 @@ function renderGovernmentCard(gov) {
   
   // Note moyenne (NOWRAP AJOUTÉ)
   const rating = gov.rating || 0;
-  const starsHTML = Array(5).fill(0).map((_, i) => 
-    i < Math.round(rating) ? '<i class="icon-star-filled"></i>' : '<i class="icon-star-empty"></i>'
+  const votesCount = gov.votes_count || 0;
+  
+  // Cœurs pour affichage de la note
+  const heartsDisplay = Array(5).fill(0).map((_, i) => 
+    i < Math.round(rating) ? '<i class="icon-heart-filled" style="color: #ff6b6b;"></i>' : '<i class="icon-heart-empty" style="color: #ddd;"></i>'
   ).join('');
   
   return `
@@ -379,6 +446,28 @@ function renderGovernmentCard(gov) {
           ${hasMore ? `<div class="_w-courant _w-grey" style="margin-top: 10px;"><i class="icon-user"></i> + ${positions.length - 5} autres membres...</div>` : ''}
         </div>
         
+        <!-- Vote Section -->
+        <div style="background: #fff9e6; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #ffd93d;" onclick="event.stopPropagation();">
+          <div style="font-weight: bold; margin-bottom: 10px; color: #333;">💗 Votez pour ce gouvernement :</div>
+          <div class="rating-hearts" id="rating-${gov.id}">
+            <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-5" value="5" onchange="submitVote('${gov.id}', 5)">
+            <label for="vote-${gov.id}-5"><i class="icon-heart-filled"></i></label>
+            <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-4" value="4" onchange="submitVote('${gov.id}', 4)">
+            <label for="vote-${gov.id}-4"><i class="icon-heart-filled"></i></label>
+            <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-3" value="3" onchange="submitVote('${gov.id}', 3)">
+            <label for="vote-${gov.id}-3"><i class="icon-heart-filled"></i></label>
+            <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-2" value="2" onchange="submitVote('${gov.id}', 2)">
+            <label for="vote-${gov.id}-2"><i class="icon-heart-filled"></i></label>
+            <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-1" value="1" onchange="submitVote('${gov.id}', 1)">
+            <label for="vote-${gov.id}-1"><i class="icon-heart-filled"></i></label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 0.9em; color: #666;">
+            <span>Note actuelle:</span>
+            <span style="font-weight: bold; color: #ff6b6b; font-size: 1.2em;">${rating.toFixed(1)} / 5</span>
+            <span>(${votesCount} vote${votesCount > 1 ? 's' : ''})</span>
+          </div>
+        </div>
+        
         <!-- Bouton Détail -->
         <div class="detail" onclick="showDetails('${gov.id}')">
           <div class="fontello-white"><i class="icon-eye"></i></div>
@@ -389,15 +478,15 @@ function renderGovernmentCard(gov) {
       <!-- Infos et actions -->
       <div class="block-gov-infos">
         <div class="infos">
-          <!-- Étoiles -->
+          <!-- Cœurs d'affichage -->
           <div class="_w-courant-div">
-            <div class="fontello-rose">${starsHTML}</div>
+            <div class="fontello-rose">${heartsDisplay}</div>
           </div>
           
-          <!-- Nombre de votes -->
+          <!-- Nombre de votes (SANS CŒUR) -->
           <div class="_w-courant-div">
             <div class="_w-courant _w-mini _w-white">Nombre de votes</div>
-            <div class="_w-courant _w-bold _w-pink"><i class="icon-heart-filled"></i> ${Object.keys(userVotes).filter(k => k === gov.id).length}</div>
+            <div class="_w-courant _w-bold _w-pink">${votesCount}</div>
           </div>
           
           <!-- Type -->
@@ -411,14 +500,6 @@ function renderGovernmentCard(gov) {
             <div class="_w-courant _w-mini _w-white">Publié le ${date} par</div>
             <a href="#" class="_w-user"><i class="icon-user"></i> utilisateur</a>
           </div>
-          
-          <!-- Likes totaux -->
-          ${totalLikes > 0 ? `
-            <div class="_w-courant-div">
-              <div class="_w-courant _w-mini">Likes cumulés</div>
-              <div class="_w-courant _w-bold _w-pink"><i class="icon-heart"></i> ${totalLikes}</div>
-            </div>
-          ` : ''}
         </div>
         
         <!-- Actions (ICÔNES FONTELLO) -->
@@ -438,20 +519,54 @@ function renderGovernmentCard(gov) {
 }
 
 // ============================================
-// Afficher les détails (MODAL REFAIT AVEC CODES GOV BLOC)
+// Soumettre un vote
+// ============================================
+async function submitVote(govId, rating) {
+  // Sauvegarder localement
+  userVotes[govId] = rating;
+  localStorage.setItem('sosgouv_user_votes', JSON.stringify(userVotes));
+  
+  // Envoyer à Supabase
+  try {
+    const { data, error } = await supabase
+      .from('government_votes')
+      .insert({
+        government_id: govId,
+        rating: rating,
+        user_id: 'anonymous' // À remplacer par l'ID utilisateur réel si connecté
+      });
+    
+    if (error) console.error('Erreur vote:', error);
+  } catch (e) {
+    console.log('Table government_votes non trouvée, vote sauvegardé localement uniquement');
+  }
+  
+  // Recalculer la moyenne
+  const gov = allGovernments.find(g => g.id === govId);
+  if (gov) {
+    const currentTotal = (gov.rating || 0) * (gov.votes_count || 0);
+    gov.votes_count = (gov.votes_count || 0) + 1;
+    gov.rating = (currentTotal + rating) / gov.votes_count;
+    
+    alert(`✅ Vote enregistré !\nVous avez donné ${rating}/5 cœurs`);
+    applyFilters();
+  }
+}
+
+// ============================================
+// Afficher les détails (MODAL AVEC CODES GOV BLOC)
 // ============================================
 function showDetails(govId) {
   const gov = allGovernments.find(g => g.id === govId);
   if (!gov) return;
   
   const positions = gov.positions || [];
-  const totalLikes = calculateTotalLikes(gov);
   const date = new Date(gov.created_at).toLocaleDateString('fr-FR');
   const rating = gov.rating || 0;
   
-  // Stars
-  const starsHTML = Array(5).fill(0).map((_, i) => 
-    i < Math.round(rating) ? '<i class="icon-star-filled"></i>' : '<i class="icon-star-empty"></i>'
+  // Hearts display
+  const heartsHTML = Array(5).fill(0).map((_, i) => 
+    i < Math.round(rating) ? '<i class="icon-heart-filled" style="color: #ff6b6b;"></i>' : '<i class="icon-heart-empty" style="color: #ddd;"></i>'
   ).join('');
   
   // Status badge
@@ -463,18 +578,19 @@ function showDetails(govId) {
   const typeClass = gov.type === 'classique' ? 'classique' : 
                    gov.type === 'hybride' ? 'fiche' : 'note-moy';
   
-  // Members list
+  // Members list WITH LINKS
   const membersHTML = positions.map(pos => {
     const pers = allPersonalities.find(p => p.id === pos.personality_id);
     if (!pers) return '';
     
     return `
       <div class="_w-courant-div" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
-        <div class="_w-courant _w-bold" style="font-size: 1.1em;">${pers.firstname} ${pers.name}</div>
+        <a href="page-personalité.html?id=${pers.id}" class="personality-link">
+          <div class="_w-courant _w-bold" style="font-size: 1.1em;">${pers.firstname} ${pers.name}</div>
+        </a>
         <div class="div-block-214">
           <div class="_w-courant _w-grey">${pos.sector} - ${pos.title}</div>
           ${pos.subsectors && pos.subsectors.length > 0 ? `<div class="_w-courant _w-mini" style="margin-top: 5px;"><em>Sous-secteurs: ${pos.subsectors.join(', ')}</em></div>` : ''}
-          ${pers.nombre_likes ? `<div class="_w-courant _w-mini" style="margin-top: 5px;"><i class="icon-heart"></i> ${pers.nombre_likes} likes</div>` : ''}
         </div>
       </div>
     `;
@@ -496,7 +612,7 @@ function showDetails(govId) {
         <!-- Description -->
         ${gov.comment ? `
           <div class="descript" style="background: #fff9e6; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid var(--sos-yellow);">
-            <h3 style="margin: 0 0 10px 0; color: var(--color);"><i class="icon-chat"></i> Vision de l'auteur</h3>
+            <h3 style="margin: 0 0 10px 0; color: var(--color);">💬 Vision de l'auteur</h3>
             <p class="paragraph-2" style="margin: 0;">${gov.comment}</p>
           </div>
         ` : ''}
@@ -513,9 +629,9 @@ function showDetails(govId) {
       <!-- Infos -->
       <div class="block-gov-infos">
         <div class="infos">
-          <!-- Étoiles -->
+          <!-- Cœurs -->
           <div class="_w-courant-div">
-            <div class="fontello-rose">${starsHTML}</div>
+            <div class="fontello-rose">${heartsHTML}</div>
           </div>
           
           <!-- Type -->
@@ -530,13 +646,11 @@ function showDetails(govId) {
             <div class="_w-courant _w-bold">${date}</div>
           </div>
           
-          <!-- Likes totaux -->
-          ${totalLikes > 0 ? `
-            <div class="_w-courant-div">
-              <div class="_w-courant _w-mini">Likes cumulés</div>
-              <div class="_w-courant _w-bold _w-pink"><i class="icon-heart"></i> ${totalLikes}</div>
-            </div>
-          ` : ''}
+          <!-- Votes -->
+          <div class="_w-courant-div">
+            <div class="_w-courant _w-mini _w-white">Nombre de votes</div>
+            <div class="_w-courant _w-bold _w-pink">${gov.votes_count || 0}</div>
+          </div>
         </div>
       </div>
     </div>
