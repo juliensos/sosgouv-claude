@@ -587,7 +587,10 @@
             renderPositions();
         }
 
-        init();
+        // Initialisation AVEC DÉLAI pour le router
+setTimeout(() => {
+  init();
+}, 200);
     </script>
 </body>
 </html>
