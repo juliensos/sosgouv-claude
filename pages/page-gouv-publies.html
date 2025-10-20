@@ -226,10 +226,28 @@ let pinnedGovs = JSON.parse(localStorage.getItem('sosgouv_pinned') || '[]');
 async function init() {
   console.log('🚀 Initialisation de la page gouvernements...');
   
-  // Récupérer l'utilisateur connecté
-  const { data: { session } } = await supabase.auth.getSession();
-  currentUser = session?.user || null;
-  console.log('👤 Utilisateur:', currentUser ? currentUser.email : 'Non connecté');
+  // Récupérer l'utilisateur connecté - MÉTHODE CORRIGÉE
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error) {
+      console.error('❌ Erreur auth:', error);
+    }
+    
+    currentUser = user;
+    console.log('👤 Utilisateur récupéré:', currentUser);
+    
+    if (currentUser) {
+      console.log('✅ ID utilisateur:', currentUser.id);
+      console.log('✅ Email:', currentUser.email);
+    } else {
+      console.warn('⚠️ Aucun utilisateur connecté');
+    }
+    
+  } catch (error) {
+    console.error('❌ Erreur lors de la récupération de l\'utilisateur:', error);
+    currentUser = null;
+  }
   
   await loadPersonalities();
   await loadGovernments();
