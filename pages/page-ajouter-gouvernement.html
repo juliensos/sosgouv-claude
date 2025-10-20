@@ -714,16 +714,34 @@
             }
         });
 
-        // Initialisation
+        // Initialisation robuste
         async function init() {
+            console.log('🚀 Initialisation...');
             await loadPersonalities();
             renderPositions();
+            console.log('✅ Page prête !');
         }
 
-        // Initialisation AVEC DÉLAI pour le router
-        setTimeout(() => {
-            init();
-        }, 200);
+        // Attendre que tout soit chargé avant d'initialiser
+        function waitForReady() {
+            // Vérifier que le conteneur existe
+            const container = document.getElementById('positionsContainer');
+            
+            if (container && window.supabase) {
+                console.log('✅ DOM et Supabase prêts');
+                init();
+            } else {
+                console.log('⏳ En attente...');
+                setTimeout(waitForReady, 100);
+            }
+        }
+
+        // Démarrer l'initialisation
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', waitForReady);
+        } else {
+            waitForReady();
+        }
     </script>
 </body>
 </html>
