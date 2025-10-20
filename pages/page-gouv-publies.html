@@ -110,7 +110,7 @@
 }
 
 .rating-hearts i {
-  color: #ddd;
+  color: #333;
   transition: color 0.2s;
   cursor: pointer;
   flex-shrink: 0;
@@ -138,17 +138,21 @@
 <div class="page gouv-publi-s">
   <div class="div-govglobal">
     
-    <!-- Menu boutons (ROUTER LINKS) -->
+    <!-- Menu boutons -->
+    <!-- IMPORTANT : Ces routes doivent exister dans router.js :
+         'ajouter-gouvernement': 'pages/page-ajouter-gouvernement.html'
+         'ajouter-perso': 'pages/page-ajouter-perso.html'
+    -->
     <div class="div-gov-menu">
-      <a href="#" data-page="ajouter-gouvernement" class="_w-link-bloc-button w-inline-block">
+      <a href="#ajouter-gouvernement" class="_w-link-bloc-button w-inline-block">
         <div class="text-block-52"><i class="icon-plus"></i></div>
         <div>ajouter un gouvernement</div>
       </a>
-      <a href="#" data-page="ajouter-perso" class="_w-link-bloc-button w-inline-block">
+      <a href="#ajouter-perso" class="_w-link-bloc-button w-inline-block">
         <div class="text-block-52"><i class="icon-user"></i></div>
         <div>ajouter une personnalité</div>
       </a>
-      <a href="#" data-page="personnalites" class="_w-link-bloc-button blanc w-inline-block">
+      <a href="#personnalites" class="_w-link-bloc-button blanc w-inline-block">
         <div class="text-block-52"><i class="icon-list"></i></div>
         <div>Liste personnalités</div>
       </a>
@@ -159,11 +163,10 @@
       <h3 class="heading-3-gov">Gouvernements publiés</h3>
     </div>
 
-    <!-- Filtres (SELECTS NATIFS CORRIGÉS : 12px, sans contour) -->
+    <!-- Filtres (SELECTS NATIFS CORRIGÉS : 12px, sans contour, SANS LABELS) -->
     <div class="_w-selecta">
       <!-- Select Type -->
       <div>
-        <label class="filter-label">Type</label>
         <select id="filterType" class="filter-select" onchange="applyFilters()">
           <option value="all">Tous</option>
           <option value="classique">Classique</option>
@@ -173,7 +176,6 @@
 
       <!-- Select Trier par -->
       <div>
-        <label class="filter-label">Trier par</label>
         <select id="filterSort" class="filter-select" onchange="applyFilters()">
           <option value="recent">Plus récents</option>
           <option value="rating">Mieux notés</option>
@@ -228,8 +230,10 @@ let pinnedGovs = JSON.parse(localStorage.getItem('sosgouv_pinned') || '[]');
 async function init() {
   console.log('🚀 Initialisation de la page gouvernements...');
   
-  const { data: { user } } = await supabase.auth.getUser();
-  currentUser = user;
+  // Récupérer l'utilisateur connecté
+  const { data: { session } } = await supabase.auth.getSession();
+  currentUser = session?.user || null;
+  console.log('👤 Utilisateur:', currentUser ? currentUser.email : 'Non connecté');
   
   await loadPersonalities();
   await loadGovernments();
@@ -344,7 +348,7 @@ function renderGovernments(governments) {
         <div style="font-size: 48px; margin-bottom: 20px;">🏛️</div>
         <h3>Aucun gouvernement trouvé</h3>
         <p>Soyez le premier à créer un gouvernement !</p>
-        <a href="#" data-page="ajouter-gouvernement" style="display: inline-block; margin-top: 20px; background: var(--sos-yellow); color: #000; padding: 12px 24px; border-radius: 5px; text-decoration: none; font-weight: bold;">
+        <a href="#ajouter-gouvernement" style="display: inline-block; margin-top: 20px; background: var(--sos-yellow); color: #000; padding: 12px 24px; border-radius: 5px; text-decoration: none; font-weight: bold;">
           <i class="icon-plus"></i> Créer un gouvernement
         </a>
       </div>
