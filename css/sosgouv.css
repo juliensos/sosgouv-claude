@@ -3727,7 +3727,7 @@ a {
 .n-header {
   grid-column-gap: 0px;
   grid-row-gap: 0px;
-  border: 1px solid var(--light-grey);
+  border: 1px none var(--light-grey);
   flex-flow: row;
   grid-template-rows: auto;
   grid-template-columns: 1fr 1fr;
@@ -3749,7 +3749,7 @@ a {
 .esp {
   grid-column-gap: 0px;
   grid-row-gap: 0px;
-  border: 1px solid var(--light-grey);
+  border: 1px none var(--light-grey);
   color: var(--sos-grey-1);
   flex-flow: column;
   flex: 1;
@@ -3791,7 +3791,7 @@ a {
   align-items: flex-start;
   width: 100%;
   max-width: 940px;
-  padding: 20px;
+  padding: 10px 0 20px;
   display: flex;
   position: relative;
 }
@@ -3810,7 +3810,7 @@ a {
 }
 
 ._w-body {
-  border: 1px solid var(--light-grey);
+  border: 1px none var(--light-grey);
   flex: 1;
   width: 100%;
   padding: 40px 0;
@@ -4063,10 +4063,18 @@ a {
   margin-right: 5px;
 }
 
+._w-courant.light.no-wrap.p {
+  margin-bottom: 10px;
+}
+
 ._w-courant.nowrap {
   white-space: nowrap;
   padding-left: 2.5px;
   padding-right: 2.5px;
+}
+
+._w-courant.nowrap.bold {
+  font-weight: 700;
 }
 
 ._w-courant-div {
@@ -4090,7 +4098,9 @@ a {
 .gov-bloc {
   grid-column-gap: 16px;
   grid-row-gap: 16px;
-  border: 1px solid var(--black-100);
+  border-style: none none dashed;
+  border-width: 1px;
+  border-color: var(--black-100);
   border-radius: 5px;
   grid-template-rows: auto;
   grid-template-columns: 2fr 1fr;
@@ -4134,6 +4144,10 @@ a {
   margin-bottom: 10px;
   font-weight: 400;
   line-height: 18px;
+}
+
+.paragraph-2.short {
+  font-weight: 600;
 }
 
 .grey-link {
@@ -4563,6 +4577,8 @@ a {
   flex-flow: column;
   justify-content: flex-start;
   max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
   display: flex;
 }
 
@@ -4584,7 +4600,7 @@ a {
   margin-left: auto;
   margin-right: auto;
   padding: 20px;
-  display: flex;
+  display: block;
   position: relative;
 }
 
@@ -4604,6 +4620,16 @@ a {
 }
 
 .page.liste-personalites {
+  border-style: none;
+  display: block;
+}
+
+.page.fiche-personalit {
+  pointer-events: auto;
+  border-style: none;
+}
+
+.page.utilisateur {
   border-style: none;
   display: block;
 }
@@ -4827,16 +4853,20 @@ a {
   grid-column-gap: 0px;
   grid-row-gap: 0px;
   color: var(--sos-grey-1);
-  flex-flow: column;
-  flex: 1;
+  flex-flow: wrap;
+  flex: none;
   justify-content: flex-start;
   align-items: flex-end;
   display: flex;
 }
 
 .admin-bloc._0 {
+  grid-column-gap: 18px;
+  grid-row-gap: 18px;
+  flex-flow: row;
   justify-content: flex-start;
   align-items: flex-start;
+  display: flex;
 }
 
 .text-block-60 {
@@ -4920,6 +4950,14 @@ a {
 ._w-link-bloc-button.add-ministere {
   background-color: var(--sos-white);
   color: var(--sos-link2);
+}
+
+._w-link-bloc-button.fermer {
+  background-color: var(--sos-white);
+  flex: none;
+  justify-content: center;
+  align-items: center;
+  display: flex;
 }
 
 .dropdown-4-copy {
@@ -5068,7 +5106,7 @@ a {
 .send-et-pin-perso {
   grid-column-gap: 7px;
   grid-row-gap: 7px;
-  flex-flow: column;
+  flex-flow: wrap;
   align-items: flex-start;
   margin-top: 0;
   display: flex;
@@ -5221,6 +5259,105 @@ a {
   grid-row-gap: 10px;
   flex-flow: column;
   margin-bottom: 20px;
+  display: flex;
+}
+
+.perso-fiche-bloc {
+  grid-column-gap: 16px;
+  grid-row-gap: 16px;
+  border: 0 #000;
+  border-radius: 0;
+  grid-template-rows: auto;
+  grid-template-columns: 2fr 1fr;
+  grid-auto-columns: 1fr;
+  margin-bottom: 20px;
+  display: grid;
+}
+
+.image-perso {
+  aspect-ratio: 1;
+  background-color: var(--sos-grey-1);
+  width: 100px;
+  height: 100px;
+}
+
+.descript-photo-bio {
+  grid-column-gap: 16px;
+  grid-row-gap: 16px;
+  flex-flow: row;
+  grid-template-rows: auto auto;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-columns: 1fr;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  display: flex;
+}
+
+.bloc-postes {
+  grid-column-gap: 0px;
+  grid-row-gap: 0px;
+  flex-flow: column;
+  display: flex;
+}
+
+.poste-user {
+  grid-column-gap: 10px;
+  grid-row-gap: 10px;
+  display: flex;
+}
+
+.blo-meia {
+  grid-column-gap: 16px;
+  grid-row-gap: 16px;
+  grid-template-rows: auto;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-columns: 1fr;
+  margin-top: 20px;
+  display: grid;
+}
+
+.block-infos-fiche {
+  flex-flow: column;
+  justify-content: flex-start;
+  padding: 10px 20px 20px;
+  display: flex;
+}
+
+.link-admin {
+  white-space: nowrap;
+}
+
+.admin-bloc-lonk {
+  grid-column-gap: 0px;
+  grid-row-gap: 0px;
+  color: var(--sos-grey-1);
+  flex-flow: wrap;
+  flex: none;
+  grid-template-rows: auto auto;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-auto-columns: 1fr;
+  justify-content: flex-start;
+  align-items: flex-end;
+  width: 60%;
+  display: grid;
+}
+
+.admin-bloc-lonk._0 {
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.prso-gouv {
+  grid-column-gap: 0px;
+  grid-row-gap: 0px;
+  flex-flow: wrap;
+  display: flex;
+}
+
+.perso-fonction {
+  flex: none;
+  align-items: center;
+  padding-right: 10px;
   display: flex;
 }
 
@@ -6063,6 +6200,20 @@ a {
   .blochybride-ligne-1 {
     flex-flow: column;
     align-items: stretch;
+  }
+
+  .perso-fiche-bloc {
+    grid-column-gap: 0px;
+    grid-row-gap: 0px;
+    grid-template-columns: 2fr;
+  }
+
+  .block-infos-fiche {
+    padding-top: 10px;
+  }
+
+  .admin-bloc-lonk {
+    display: none;
   }
 }
 
