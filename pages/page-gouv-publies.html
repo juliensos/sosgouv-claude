@@ -49,17 +49,17 @@
 
 /* Style pour les selects natifs */
 .filter-select {
-  padding: 10px 35px 10px 15px;
-  border: 2px solid var(--sos-grey-3, #ddd);
+  padding: 8px 30px 8px 12px;
+  border: 1px solid var(--sos-grey-3, #ddd);
   border-radius: 5px;
-  font-size: 14px;
+  font-size: 12px;
   background: white;
   cursor: pointer;
   appearance: none;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 16px;
+  background-position: right 8px center;
+  background-size: 14px;
 }
 
 .filter-select:hover {
@@ -69,6 +69,17 @@
 .filter-select:focus {
   outline: none;
   border-color: var(--color, #667eea);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.filter-select option {
+  background: white;
+  padding: 8px;
+}
+
+/* Style pour le container des filtres */
+._w-selecta {
+  border: none !important;
 }
 
 /* Système de vote avec cœurs */
@@ -77,7 +88,7 @@
   gap: 5px;
   flex-direction: row-reverse;
   justify-content: flex-end;
-  font-size: 1.8em;
+  font-size: 1.5em;
 }
 
 .rating-hearts input[type="radio"] {
@@ -99,6 +110,12 @@
   color: #ff6b6b;
 }
 
+.infos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 /* Lien personnalité */
 .personality-link {
   color: inherit;
@@ -109,6 +126,14 @@
 .personality-link:hover {
   color: var(--sos-pink, #ff6b6b);
   text-decoration: underline;
+}
+
+/* Gov-bloc avec filet en tiret en bas */
+.gov-bloc {
+  border: none !important;
+  border-bottom: 2px dashed #ddd !important;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
 }
 </style>
 
@@ -138,25 +163,19 @@
 
     <!-- Filtres (SELECTS NATIFS) -->
     <div class="_w-selecta">
-      <!-- Select Type -->
-      <div style="display: flex; flex-direction: column; gap: 5px;">
-        <label style="font-size: 12px; color: var(--sos-grey-1);">Type</label>
-        <select id="filterType" class="filter-select" onchange="applyFilters()">
-          <option value="all">Tous</option>
-          <option value="classique">Classique</option>
-          <option value="hybride">Hybride</option>
-        </select>
-      </div>
+      <!-- Select Type (sans label) -->
+      <select id="filterType" class="filter-select" onchange="applyFilters()">
+        <option value="all">Type : Tous</option>
+        <option value="classique">Type : Classique</option>
+        <option value="hybride">Type : Hybride</option>
+      </select>
 
-      <!-- Select Trier par -->
-      <div style="display: flex; flex-direction: column; gap: 5px;">
-        <label style="font-size: 12px; color: var(--sos-grey-1);">Trier par</label>
-        <select id="sortBy" class="filter-select" onchange="applyFilters()">
-          <option value="recent">Plus récents</option>
-          <option value="rating">Mieux notés</option>
-          <option value="votes">Plus votés</option>
-        </select>
-      </div>
+      <!-- Select Trier par (sans label) -->
+      <select id="sortBy" class="filter-select" onchange="applyFilters()">
+        <option value="recent">Trier par : Plus récents</option>
+        <option value="rating">Trier par : Mieux notés</option>
+        <option value="votes">Trier par : Plus votés</option>
+      </select>
 
       <!-- Checkbox Prêt à gouverner -->
       <div class="form-block-7 w-form">
@@ -416,11 +435,6 @@ function renderGovernmentCard(gov) {
   const rating = gov.rating || 0;
   const votesCount = gov.votes_count || 0;
   
-  // Cœurs pour affichage de la note
-  const heartsDisplay = Array(5).fill(0).map((_, i) => 
-    i < Math.round(rating) ? '<i class="icon-heart-filled" style="color: #ff6b6b;"></i>' : '<i class="icon-heart-empty" style="color: #ddd;"></i>'
-  ).join('');
-  
   return `
     <div class="gov-bloc">
       <div class="bloc-gov-list">
@@ -446,28 +460,6 @@ function renderGovernmentCard(gov) {
           ${hasMore ? `<div class="_w-courant _w-grey" style="margin-top: 10px;"><i class="icon-user"></i> + ${positions.length - 5} autres membres...</div>` : ''}
         </div>
         
-        <!-- Vote Section -->
-        <div style="background: #fff9e6; padding: 15px; border-radius: 8px; margin: 15px 0; border: 2px solid #ffd93d;" onclick="event.stopPropagation();">
-          <div style="font-weight: bold; margin-bottom: 10px; color: #333;">💗 Votez pour ce gouvernement :</div>
-          <div class="rating-hearts" id="rating-${gov.id}">
-            <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-5" value="5" onchange="submitVote('${gov.id}', 5)">
-            <label for="vote-${gov.id}-5"><i class="icon-heart-filled"></i></label>
-            <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-4" value="4" onchange="submitVote('${gov.id}', 4)">
-            <label for="vote-${gov.id}-4"><i class="icon-heart-filled"></i></label>
-            <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-3" value="3" onchange="submitVote('${gov.id}', 3)">
-            <label for="vote-${gov.id}-3"><i class="icon-heart-filled"></i></label>
-            <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-2" value="2" onchange="submitVote('${gov.id}', 2)">
-            <label for="vote-${gov.id}-2"><i class="icon-heart-filled"></i></label>
-            <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-1" value="1" onchange="submitVote('${gov.id}', 1)">
-            <label for="vote-${gov.id}-1"><i class="icon-heart-filled"></i></label>
-          </div>
-          <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 0.9em; color: #666;">
-            <span>Note actuelle:</span>
-            <span style="font-weight: bold; color: #ff6b6b; font-size: 1.2em;">${rating.toFixed(1)} / 5</span>
-            <span>(${votesCount} vote${votesCount > 1 ? 's' : ''})</span>
-          </div>
-        </div>
-        
         <!-- Bouton Détail -->
         <div class="detail" onclick="showDetails('${gov.id}')">
           <div class="fontello-white"><i class="icon-eye"></i></div>
@@ -478,9 +470,20 @@ function renderGovernmentCard(gov) {
       <!-- Infos et actions -->
       <div class="block-gov-infos">
         <div class="infos">
-          <!-- Cœurs d'affichage -->
-          <div class="_w-courant-div">
-            <div class="fontello-rose">${heartsDisplay}</div>
+          <!-- Cœurs de vote EN HAUT -->
+          <div class="_w-courant-div" onclick="event.stopPropagation();" style="order: -1;">
+            <div class="rating-hearts" id="rating-${gov.id}" style="justify-content: flex-end; margin: 0;">
+              <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-5" value="5" onchange="submitVote('${gov.id}', 5)">
+              <label for="vote-${gov.id}-5"><i class="icon-heart-filled"></i></label>
+              <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-4" value="4" onchange="submitVote('${gov.id}', 4)">
+              <label for="vote-${gov.id}-4"><i class="icon-heart-filled"></i></label>
+              <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-3" value="3" onchange="submitVote('${gov.id}', 3)">
+              <label for="vote-${gov.id}-3"><i class="icon-heart-filled"></i></label>
+              <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-2" value="2" onchange="submitVote('${gov.id}', 2)">
+              <label for="vote-${gov.id}-2"><i class="icon-heart-filled"></i></label>
+              <input type="radio" name="vote-${gov.id}" id="vote-${gov.id}-1" value="1" onchange="submitVote('${gov.id}', 1)">
+              <label for="vote-${gov.id}-1"><i class="icon-heart-filled"></i></label>
+            </div>
           </div>
           
           <!-- Nombre de votes (SANS CŒUR) -->
@@ -564,11 +567,6 @@ function showDetails(govId) {
   const date = new Date(gov.created_at).toLocaleDateString('fr-FR');
   const rating = gov.rating || 0;
   
-  // Hearts display
-  const heartsHTML = Array(5).fill(0).map((_, i) => 
-    i < Math.round(rating) ? '<i class="icon-heart-filled" style="color: #ff6b6b;"></i>' : '<i class="icon-heart-empty" style="color: #ddd;"></i>'
-  ).join('');
-  
   // Status badge
   const statusBadge = gov.status === 'public' 
     ? '<div class="nowrap _w-courant _w-bold _w-vert">Prêt à gouverner</div>'
@@ -629,11 +627,6 @@ function showDetails(govId) {
       <!-- Infos -->
       <div class="block-gov-infos">
         <div class="infos">
-          <!-- Cœurs -->
-          <div class="_w-courant-div">
-            <div class="fontello-rose">${heartsHTML}</div>
-          </div>
-          
           <!-- Type -->
           <div class="_w-courant-div">
             <div class="_w-courant _w-mini">Type</div>
@@ -646,7 +639,12 @@ function showDetails(govId) {
             <div class="_w-courant _w-bold">${date}</div>
           </div>
           
-          <!-- Votes -->
+          <!-- Note et Votes -->
+          <div class="_w-courant-div">
+            <div class="_w-courant _w-mini _w-white">Note moyenne</div>
+            <div class="_w-courant _w-bold _w-pink">${rating.toFixed(1)} / 5</div>
+          </div>
+          
           <div class="_w-courant-div">
             <div class="_w-courant _w-mini _w-white">Nombre de votes</div>
             <div class="_w-courant _w-bold _w-pink">${gov.votes_count || 0}</div>
