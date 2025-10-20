@@ -1,0 +1,665 @@
+<!-- ============================================ -->
+<!-- SOS-GOUV - Page Gouvernements Publiés (CORRECTIONS FINALES) -->
+<!-- Vote par cœurs + Filtres natifs + Badge conditionnel -->
+<!-- ============================================ -->
+
+<style>
+/* Affichage forcé de la page */
+.page.gouv-publi-s {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Fontello Icons */
+@font-face {
+  font-family: 'fontello';
+  src: url('./fonts/fontello.woff2?98826985') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+[class^="icon-"]:before, [class*=" icon-"]:before {
+  font-family: "fontello";
+  font-style: normal;
+  font-weight: normal;
+  speak: never;
+  display: inline-block;
+  text-decoration: inherit;
+  width: 1em;
+  margin-right: .2em;
+  text-align: center;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1em;
+  margin-left: .2em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-paper-plane:before { content: '\e800'; }
+.icon-search:before { content: '\e801'; }
+.icon-heart-empty:before { content: '\e808'; }
+.icon-heart-filled:before { content: '\e803'; }
+.icon-pin:before { content: '\e80a'; }
+.icon-pin-outline:before { content: '\e80b'; }
+.icon-user:before { content: '\e818'; }
+.icon-eye:before { content: '\e84a'; }
+.icon-plus:before { content: '\e823'; }
+.icon-list:before { content: '\e84e'; }
+.icon-cancel:before { content: '\e805'; }
+
+/* Nowrap utility */
+.nowrap {
+  white-space: nowrap;
+}
+
+/* Filet en tiret au dessous du gov-bloc */
+.gov-bloc {
+  border-bottom: 2px dashed #e0e0e0 !important;
+  border: none !important;
+  padding-bottom: 20px !important;
+  margin-bottom: 20px !important;
+}
+
+/* Style pour les selects natifs (CORRIGÉ : 12px, sans contour) */
+._w-selecta {
+  display: flex;
+  gap: 15px;
+  align-items: flex-end;
+  margin-bottom: 30px;
+}
+
+._w-selecta > div {
+  flex: 1;
+}
+
+.filter-select {
+  width: 100%;
+  padding: 8px 30px 8px 10px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 5px center;
+  background-size: 14px;
+}
+
+.filter-select:focus {
+  outline: none;
+  background-color: white;
+  border-radius: 5px;
+  box-shadow: 0 0 0 1px #e0e0e0;
+}
+
+.filter-label {
+  font-size: 12px;
+  color: var(--sos-grey-1);
+  margin-bottom: 5px;
+  display: block;
+}
+
+/* Système de vote avec cœurs (ALIGNÉS À GAUCHE, SANS STRETCH) */
+.rating-hearts {
+  display: inline-flex;
+  gap: 3px;
+  font-size: 1.3em;
+}
+
+.rating-hearts i {
+  color: #333;
+  transition: color 0.2s;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.rating-hearts i:hover,
+.rating-hearts i.filled {
+  color: #ff6b6b;
+}
+
+/* Lien personnalité */
+.personality-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.personality-link:hover {
+  color: var(--sos-pink, #ff6b6b);
+  text-decoration: underline;
+}
+</style>
+
+<div class="page gouv-publi-s">
+  <div class="div-govglobal">
+    
+    <!-- Menu boutons -->
+    <div class="div-gov-menu">
+      <a href="#" data-page="ajouter-gouvernement" class="_w-link-bloc-button w-inline-block">
+        <div class="text-block-52"><i class="icon-plus"></i></div>
+        <div>ajouter un gouvernement</div>
+      </a>
+      <a href="#" data-page="ajouter-perso" class="_w-link-bloc-button w-inline-block">
+        <div class="text-block-52"><i class="icon-user"></i></div>
+        <div>ajouter une personnalité</div>
+      </a>
+      <a href="#" data-page="personnalites" class="_w-link-bloc-button blanc w-inline-block">
+        <div class="text-block-52"><i class="icon-list"></i></div>
+        <div>Liste personnalités</div>
+      </a>
+    </div>
+
+    <!-- Titre -->
+    <div class="title-bloc">
+      <h3 class="heading-3-gov">Gouvernements publiés</h3>
+    </div>
+
+    <!-- Filtres (SELECTS NATIFS CORRIGÉS : 12px, sans contour, SANS LABELS) -->
+    <div class="_w-selecta">
+      <!-- Select Type -->
+      <div>
+        <select id="filterType" class="filter-select" onchange="applyFilters()">
+          <option value="all">Tous</option>
+          <option value="classique">Classique</option>
+          <option value="hybride">Hybride</option>
+        </select>
+      </div>
+
+      <!-- Select Trier par -->
+      <div>
+        <select id="filterSort" class="filter-select" onchange="applyFilters()">
+          <option value="recent">Plus récents</option>
+          <option value="rating">Mieux notés</option>
+          <option value="votes">Plus votés</option>
+        </select>
+      </div>
+
+      <!-- Checkbox Prêt à gouverner -->
+      <div class="form-block-7 w-form">
+        <form id="email-form-2" name="email-form-2" data-name="Email Form 2" method="get">
+          <label class="w-checkbox _w-dropdown-copy-copy">
+            <div class="w-checkbox-input w-checkbox-input--inputType-custom checkbox" id="filterPretCheckbox"></div>
+            <input type="checkbox" id="filterPret" name="checkbox" data-name="Checkbox" style="opacity:0;position:absolute;z-index:-1" onchange="applyFilters()"/>
+            <span class="checkbox-label-2 w-form-label" for="checkbox">Prêt à gouverner</span>
+          </label>
+        </form>
+      </div>
+    </div>
+
+    <!-- Container des gouvernements -->
+    <div id="governmentsContainer">
+      <div style="padding: 40px; text-align: center; color: var(--sos-grey-1);">
+        <i class="icon-search" style="font-size: 24px;"></i> Chargement des gouvernements...
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal Détails -->
+<div id="modalDetails" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; overflow-y: auto; padding: 20px;">
+  <div style="max-width: 900px; margin: 40px auto; background: white; border-radius: 10px; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+    <button onclick="closeModal()" style="position: absolute; top: 15px; right: 15px; background: var(--red); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; z-index: 10000;">
+      <i class="icon-cancel"></i>
+    </button>
+    <div id="modalContent" style="padding: 0;"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// Utiliser l'instance Supabase GLOBALE si elle existe
+let supabase;
+if (window.supabaseClient) {
+  console.log('📌 Utilisation du client Supabase global');
+  supabase = window.supabaseClient;
+} else if (window.supabase && typeof window.supabase.createClient === 'function') {
+  console.log('📌 Création d\'un nouveau client Supabase');
+  const SUPABASE_URL = 'https://ubttetrqvvbcgvwjbylr.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} else {
+  console.error('❌ Supabase non disponible');
+}
+
+let allGovernments = [];
+let allPersonalities = [];
+let currentUser = null;
+let userVotes = JSON.parse(localStorage.getItem('sosgouv_votes') || '{}');
+let pinnedGovs = JSON.parse(localStorage.getItem('sosgouv_pinned') || '[]');
+
+async function init() {
+  console.log('🚀 Initialisation de la page gouvernements...');
+  
+  // Récupérer l'utilisateur depuis localStorage
+  const storedUser = localStorage.getItem('sosgouv_user');
+  
+  if (storedUser) {
+    try {
+      currentUser = JSON.parse(storedUser);
+      console.log('✅ Utilisateur récupéré depuis localStorage');
+      console.log('✅ ID utilisateur:', currentUser.id);
+      console.log('✅ Username:', currentUser.username);
+    } catch (error) {
+      console.error('❌ Erreur parsing localStorage:', error);
+      currentUser = null;
+    }
+  } else {
+    console.warn('⚠️ Aucun utilisateur dans localStorage');
+    currentUser = null;
+  }
+  
+  await loadPersonalities();
+  await loadGovernments();
+}
+
+async function loadPersonalities() {
+  try {
+    const { data, error } = await supabase.from('personalities').select('*');
+    if (error) throw error;
+    allPersonalities = data || [];
+    console.log(`✅ ${allPersonalities.length} personnalités chargées`);
+  } catch (error) {
+    console.error('❌ Erreur chargement personnalités:', error);
+    allPersonalities = [];
+  }
+}
+
+async function loadGovernments() {
+  try {
+    const { data: govData, error: govError } = await supabase
+      .from('governments')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (govError) throw govError;
+    
+    if (!govData || govData.length === 0) {
+      console.log('ℹ️ Aucun gouvernement trouvé');
+      allGovernments = [];
+      renderGovernments([]);
+      return;
+    }
+    
+    for (let gov of govData) {
+      const { data: positions } = await supabase
+        .from('government_positions')
+        .select('*')
+        .eq('government_id', gov.id);
+      gov.positions = positions || [];
+      
+      const { data: votes } = await supabase
+        .from('government_votes')
+        .select('rating')
+        .eq('government_id', gov.id);
+      
+      if (votes && votes.length > 0) {
+        const sum = votes.reduce((acc, v) => acc + v.rating, 0);
+        gov.rating = sum / votes.length;
+        gov.votes_count = votes.length;
+      } else {
+        gov.rating = 0;
+        gov.votes_count = 0;
+      }
+    }
+    
+    allGovernments = govData;
+    console.log(`✅ ${allGovernments.length} gouvernements chargés`);
+    applyFilters();
+    
+  } catch (error) {
+    console.error('❌ Erreur chargement gouvernements:', error);
+    showError();
+  }
+}
+
+function applyFilters() {
+  const type = document.getElementById('filterType').value;
+  const sort = document.getElementById('filterSort').value;
+  const pret = document.getElementById('filterPret').checked;
+  
+  document.getElementById('filterPretCheckbox').classList.toggle('w--redirected-checked', pret);
+  
+  let filtered = [...allGovernments];
+  
+  if (type !== 'all') {
+    filtered = filtered.filter(g => g.type === type);
+  }
+  
+  if (pret) {
+    // Filtre uniquement les gouvernements où TOUS les membres ont status "OK"
+    filtered = filtered.filter(g => {
+      if (!g.positions || g.positions.length === 0) return false;
+      return g.positions.every(pos => {
+        const pers = allPersonalities.find(p => p.id === pos.personality_id);
+        return pers && pers.status === 'OK';
+      });
+    });
+  }
+  
+  filtered.sort((a, b) => {
+    switch (sort) {
+      case 'recent':
+        return new Date(b.created_at) - new Date(a.created_at);
+      case 'rating':
+        return (b.rating || 0) - (a.rating || 0);
+      case 'votes':
+        return (b.votes_count || 0) - (a.votes_count || 0);
+      default:
+        return 0;
+    }
+  });
+  
+  renderGovernments(filtered);
+}
+
+function renderGovernments(governments) {
+  const container = document.getElementById('governmentsContainer');
+  
+  if (governments.length === 0) {
+    container.innerHTML = `
+      <div style="padding: 60px 20px; text-align: center; color: var(--sos-grey-1);">
+        <div style="font-size: 48px; margin-bottom: 20px;">🏛️</div>
+        <h3>Aucun gouvernement trouvé</h3>
+        <p>Soyez le premier à créer un gouvernement !</p>
+        <a href="#" data-page="ajouter-gouvernement" style="display: inline-block; margin-top: 20px; background: var(--sos-yellow); color: #000; padding: 12px 24px; border-radius: 5px; text-decoration: none; font-weight: bold;">
+          <i class="icon-plus"></i> Créer un gouvernement
+        </a>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = governments.map(gov => renderGovernmentCard(gov)).join('');
+}
+
+// Vérifier si le gouvernement est "prêt à gouverner"
+function isReadyToGovern(gov) {
+  if (!gov.positions || gov.positions.length === 0) return false;
+  
+  return gov.positions.every(pos => {
+    const pers = allPersonalities.find(p => p.id === pos.personality_id);
+    return pers && pers.status === 'OK';
+  });
+}
+
+function renderGovernmentCard(gov) {
+  const isPinned = pinnedGovs.includes(gov.id);
+  const date = new Date(gov.created_at).toLocaleDateString('fr-FR');
+  const myVote = userVotes[gov.id] || 0;
+  const ready = isReadyToGovern(gov);
+  
+  // Badge "Prêt à gouverner" SEULEMENT si tous les membres ont status OK
+  const statusBadge = ready
+    ? '<div class="nowrap _w-courant _w-bold _w-vert">Prêt à gouverner</div>'
+    : '';
+  
+  const typeClass = gov.type === 'classique' ? 'classique' : 'fiche';
+  
+  const positions = gov.positions || [];
+  const displayPositions = positions.slice(0, 5);
+  const hasMore = positions.length > 5;
+  
+  const membersHTML = displayPositions.map(pos => {
+    const pers = allPersonalities.find(p => p.id === pos.personality_id);
+    if (!pers) return '';
+    
+    return `
+      <div class="_w-courant-div">
+        <a href="page-personalité.html?id=${pers.id}" class="personality-link">
+          <div class="_w-courant _w-bold">${pers.firstname} ${pers.name}</div>
+        </a>
+        <div class="div-block-214">
+          <div class="_w-courant _w-grey">${pos.title}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  const rating = gov.rating || 0;
+  const votesCount = gov.votes_count || 0;
+  
+  // Cœurs de vote ALIGNÉS À GAUCHE
+  const heartsVote = Array.from({length: 5}, (_, i) => {
+    const filled = i < myVote;
+    return `<i class="icon-heart-${filled ? 'filled' : 'empty'}" onclick="voteForGov('${gov.id}', ${i + 1})" style="color: ${filled ? '#ff6b6b' : '#ddd'};"></i>`;
+  }).join('');
+  
+  return `
+    <div class="gov-bloc">
+      <div class="bloc-gov-list">
+        <div class="bloc-en-tete">
+          <h4 class="heading-4">${gov.name}</h4>
+          <div class="_w-courant-div">
+            <div class="nowrap _w-courant _w-bold _w-pink">${rating.toFixed(1)} / 5</div>
+            ${statusBadge}
+          </div>
+        </div>
+        
+        ${gov.comment ? `<div class="descript"><p class="paragraph-2">${gov.comment}</p></div>` : ''}
+        
+        <div class="membres">
+          ${membersHTML}
+          ${hasMore ? `<div class="_w-courant _w-grey" style="margin-top: 10px;"><i class="icon-user"></i> + ${positions.length - 5} autres membres...</div>` : ''}
+        </div>
+        
+        <div class="detail" onclick="showDetails('${gov.id}')">
+          <div class="fontello-white"><i class="icon-eye"></i></div>
+          <div class="mini-current mini-bold black">Détail</div>
+        </div>
+      </div>
+      
+      <div class="block-gov-infos">
+        <div class="infos">
+          <!-- Cœurs de vote (SUPPRIMÉ "Mon vote", alignés à gauche) -->
+          <div class="_w-courant-div">
+            <div class="rating-hearts">${heartsVote}</div>
+          </div>
+          
+          <!-- Nombre de votes -->
+          <div class="_w-courant-div">
+            <div class="_w-courant _w-mini _w-white">Nombre de votes</div>
+            <div class="_w-courant _w-bold _w-pink">${votesCount}</div>
+          </div>
+          
+          <!-- Type -->
+          <div class="_w-courant-div">
+            <div class="_w-courant _w-mini">Type</div>
+            <div class="mini-current ${typeClass}">${gov.type}</div>
+          </div>
+          
+          <!-- Date -->
+          <div class="_w-courant-div">
+            <div class="_w-courant _w-mini _w-white">Publié le ${date}</div>
+          </div>
+        </div>
+        
+        <div class="send-et-pin">
+          <div class="envoyer" onclick="shareByEmail('${gov.id}')">
+            <div class="fontello-white"><i class="icon-paper-plane"></i></div>
+            <div class="mini-current mini-bold">Envoyer</div>
+          </div>
+          <div class="envoyer" onclick="togglePin('${gov.id}')" style="background-color: ${isPinned ? 'var(--sos-green)' : '#000'};">
+            <div class="fontello-white"><i class="${isPinned ? 'icon-pin' : 'icon-pin-outline'}"></i></div>
+            <div class="mini-current mini-bold">${isPinned ? 'Épinglé' : 'Épingler'}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function voteForGov(govId, rating) {
+  console.log('🗳️ Tentative de vote:', { govId, rating });
+  console.log('👤 CurrentUser:', currentUser);
+  
+  if (!currentUser) {
+    console.error('❌ Pas de currentUser');
+    alert('Vous devez être connecté pour voter');
+    return;
+  }
+  
+  if (!currentUser.id) {
+    console.error('❌ currentUser.id manquant');
+    console.log('CurrentUser complet:', JSON.stringify(currentUser, null, 2));
+    alert('Erreur: ID utilisateur manquant');
+    return;
+  }
+  
+  try {
+    console.log('📤 Envoi vote à Supabase...');
+    const { error } = await supabase
+      .from('government_votes')
+      .upsert({
+        government_id: govId,
+        user_id: currentUser.id,
+        rating: rating
+      }, {
+        onConflict: 'government_id,user_id'
+      });
+    
+    if (error) {
+      console.error('❌ Erreur Supabase:', error);
+      throw error;
+    }
+    
+    console.log('✅ Vote enregistré !');
+    userVotes[govId] = rating;
+    localStorage.setItem('sosgouv_votes', JSON.stringify(userVotes));
+    
+    await loadGovernments();
+    
+  } catch (error) {
+    console.error('❌ Erreur vote:', error);
+    alert('Erreur lors du vote: ' + error.message);
+  }
+}
+
+function showDetails(govId) {
+  const gov = allGovernments.find(g => g.id === govId);
+  if (!gov) return;
+  
+  const positions = gov.positions || [];
+  const date = new Date(gov.created_at).toLocaleDateString('fr-FR');
+  const rating = gov.rating || 0;
+  const ready = isReadyToGovern(gov);
+  
+  const statusBadge = ready
+    ? '<div class="nowrap _w-courant _w-bold _w-vert">Prêt à gouverner</div>'
+    : '';
+  
+  const typeClass = gov.type === 'classique' ? 'classique' : 'fiche';
+  
+  const membersHTML = positions.map(pos => {
+    const pers = allPersonalities.find(p => p.id === pos.personality_id);
+    if (!pers) return '';
+    
+    return `
+      <div class="_w-courant-div" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+        <a href="page-personalité.html?id=${pers.id}" class="personality-link">
+          <div class="_w-courant _w-bold" style="font-size: 1.1em;">${pers.firstname} ${pers.name}</div>
+        </a>
+        <div class="div-block-214">
+          <div class="_w-courant _w-grey">${pos.sector} - ${pos.title}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  document.getElementById('modalContent').innerHTML = `
+    <div class="gov-bloc" style="border-radius: 10px; overflow: hidden; margin: 0; border: none !important;">
+      <div class="bloc-gov-list" style="padding: 30px;">
+        <div class="bloc-en-tete">
+          <h4 class="heading-4">${gov.name}</h4>
+          <div class="_w-courant-div">
+            <div class="nowrap _w-courant _w-bold _w-pink">${rating.toFixed(1)} / 5</div>
+            ${statusBadge}
+          </div>
+        </div>
+        
+        ${gov.comment ? `
+          <div class="descript" style="background: #fff9e6; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid var(--sos-yellow);">
+            <h3 style="margin: 0 0 10px 0; color: var(--color);">💬 Vision de l'auteur</h3>
+            <p class="paragraph-2" style="margin: 0;">${gov.comment}</p>
+          </div>
+        ` : ''}
+        
+        <div class="membres">
+          <h3 style="margin: 20px 0 15px 0; color: var(--color); border-bottom: 2px solid #e0e0e0; padding-bottom: 10px;">
+            <i class="icon-user"></i> Composition du Gouvernement (${positions.length})
+          </h3>
+          ${membersHTML}
+        </div>
+      </div>
+      
+      <div class="block-gov-infos">
+        <div class="infos">
+          <div class="_w-courant-div">
+            <div class="_w-courant _w-mini">Type</div>
+            <div class="mini-current ${typeClass}">${gov.type}</div>
+          </div>
+          
+          <div class="_w-courant-div">
+            <div class="_w-courant _w-mini _w-white">Publié le</div>
+            <div class="_w-courant _w-bold">${date}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('modalDetails').style.display = 'block';
+}
+
+function closeModal() {
+  document.getElementById('modalDetails').style.display = 'none';
+}
+
+function togglePin(govId) {
+  const index = pinnedGovs.indexOf(govId);
+  if (index > -1) {
+    pinnedGovs.splice(index, 1);
+  } else {
+    pinnedGovs.push(govId);
+  }
+  localStorage.setItem('sosgouv_pinned', JSON.stringify(pinnedGovs));
+  applyFilters();
+}
+
+function shareByEmail(govId) {
+  const gov = allGovernments.find(g => g.id === govId);
+  if (!gov) return;
+  
+  const email = prompt('📧 Entrez l\'adresse email :');
+  if (!email) return;
+  
+  const subject = encodeURIComponent(`Découvrez "${gov.name}" sur SOS-GOUV`);
+  const body = encodeURIComponent(`Bonjour,\n\nDécouvrez ce gouvernement sur SOS-GOUV :\n\n"${gov.name}"\n\nCordialement`);
+  
+  window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+}
+
+function showError() {
+  document.getElementById('governmentsContainer').innerHTML = `
+    <div style="padding: 40px; text-align: center;">
+      <h3 style="color: var(--red); margin-bottom: 20px;"><i class="icon-cancel"></i> Erreur de chargement</h3>
+      <button onclick="init()" style="background: var(--sos-yellow); color: #000; padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold;">
+        <i class="icon-search"></i> Réessayer
+      </button>
+    </div>
+  `;
+}
+
+document.addEventListener('click', (e) => {
+  if (e.target.id === 'modalDetails') {
+    closeModal();
+  }
+});
+
+init();
+</script>
