@@ -15,7 +15,7 @@ class Router {
       'personnalites': 'pages/page-liste-personalites.html',
       'gouvernements': 'pages/page-gouv-publies.html',
   'ajouter-gouvernement': 'pages/page-ajouter-gouvernement.html',
-  'ajouter-perso': 'pages/page-ajouter-perso.html'
+  'ajouter-perso': 'pages/page-ajouter-perso.html',
       'faq': 'pages/page-faq.html',
       'apropos': 'pages/page-apropos.html',
       'mon-espace': 'pages/page-mon-espace.html',
