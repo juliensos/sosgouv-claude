@@ -230,7 +230,6 @@ if (window.supabaseClient) {
 let allGovernments = [];
 let allPersonalities = [];
 let currentUser = null;
-let userVotes = JSON.parse(localStorage.getItem('sosgouv_votes') || '{}');
 let pinnedGovs = JSON.parse(localStorage.getItem('sosgouv_pinned') || '[]');
 
 async function init() {
@@ -293,18 +292,29 @@ async function loadGovernments() {
         .eq('government_id', gov.id);
       gov.positions = positions || [];
       
+      // Récupérer TOUS les votes de TOUS les utilisateurs
       const { data: votes } = await supabase
         .from('government_votes')
-        .select('rating')
+        .select('rating, user_id')
         .eq('government_id', gov.id);
       
       if (votes && votes.length > 0) {
+        // Calculer la moyenne globale
         const sum = votes.reduce((acc, v) => acc + v.rating, 0);
         gov.rating = sum / votes.length;
         gov.votes_count = votes.length;
+        
+        // Trouver le vote de l'utilisateur actuel
+        if (currentUser) {
+          const myVote = votes.find(v => v.user_id === currentUser.id);
+          gov.myVote = myVote ? myVote.rating : 0;
+        } else {
+          gov.myVote = 0;
+        }
       } else {
         gov.rating = 0;
         gov.votes_count = 0;
+        gov.myVote = 0;
       }
     }
     
@@ -391,10 +401,9 @@ function isReadyToGovern(gov) {
 function renderGovernmentCard(gov) {
   const isPinned = pinnedGovs.includes(gov.id);
   const date = new Date(gov.created_at).toLocaleDateString('fr-FR');
-  const myVote = userVotes[gov.id] || 0;
+  const myVote = gov.myVote || 0;
   const ready = isReadyToGovern(gov);
   
-  // Badge "Prêt à gouverner" SEULEMENT si tous les membres ont status OK
   const statusBadge = ready
     ? '<div class="nowrap _w-courant _w-bold _w-vert">Prêt à gouverner</div>'
     : '';
@@ -424,10 +433,10 @@ function renderGovernmentCard(gov) {
   const rating = gov.rating || 0;
   const votesCount = gov.votes_count || 0;
   
-  // Cœurs de vote ALIGNÉS À GAUCHE
+  // Cœurs de vote avec le vote actuel de l'utilisateur
   const heartsVote = Array.from({length: 5}, (_, i) => {
     const filled = i < myVote;
-    return `<i class="icon-heart-${filled ? 'filled' : 'empty'}" onclick="voteForGov('${gov.id}', ${i + 1})" style="color: ${filled ? '#ff6b6b' : '#ddd'};"></i>`;
+    return `<i class="icon-heart-${filled ? 'filled' : 'empty'}" onclick="voteForGov('${gov.id}', ${i + 1})" style="color: ${filled ? '#ff6b6b' : '#333'};"></i>`;
   }).join('');
   
   return `
@@ -456,12 +465,12 @@ function renderGovernmentCard(gov) {
       
       <div class="block-gov-infos">
         <div class="infos">
-          <!-- Cœurs de vote (SUPPRIMÉ "Mon vote", alignés à gauche) -->
+          <!-- Cœurs de vote (mon vote personnel) -->
           <div class="_w-courant-div">
             <div class="rating-hearts">${heartsVote}</div>
           </div>
           
-          <!-- Nombre de votes -->
+          <!-- Nombre de votes GLOBAL -->
           <div class="_w-courant-div">
             <div class="_w-courant _w-mini _w-white">Nombre de votes</div>
             <div class="_w-courant _w-bold _w-pink">${votesCount}</div>
@@ -495,24 +504,15 @@ function renderGovernmentCard(gov) {
 }
 
 async function voteForGov(govId, rating) {
-  console.log('🗳️ Tentative de vote:', { govId, rating });
-  console.log('👤 CurrentUser:', currentUser);
+  console.log('🗳️ Vote pour Supabase:', { govId, rating });
   
   if (!currentUser) {
-    console.error('❌ Pas de currentUser');
     alert('Vous devez être connecté pour voter');
     return;
   }
   
-  if (!currentUser.id) {
-    console.error('❌ currentUser.id manquant');
-    console.log('CurrentUser complet:', JSON.stringify(currentUser, null, 2));
-    alert('Erreur: ID utilisateur manquant');
-    return;
-  }
-  
   try {
-    console.log('📤 Envoi vote à Supabase...');
+    // Upsert dans Supabase (créer ou mettre à jour)
     const { error } = await supabase
       .from('government_votes')
       .upsert({
@@ -528,10 +528,9 @@ async function voteForGov(govId, rating) {
       throw error;
     }
     
-    console.log('✅ Vote enregistré !');
-    userVotes[govId] = rating;
-    localStorage.setItem('sosgouv_votes', JSON.stringify(userVotes));
+    console.log('✅ Vote enregistré dans Supabase !');
     
+    // Recharger les gouvernements pour mettre à jour les moyennes
     await loadGovernments();
     
   } catch (error) {
