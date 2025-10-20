@@ -236,26 +236,21 @@ let pinnedGovs = JSON.parse(localStorage.getItem('sosgouv_pinned') || '[]');
 async function init() {
   console.log('🚀 Initialisation de la page gouvernements...');
   
-  // Récupérer l'utilisateur connecté - MÉTHODE CORRIGÉE
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
-    if (error) {
-      console.error('❌ Erreur auth:', error);
-    }
-    
-    currentUser = user;
-    console.log('👤 Utilisateur récupéré:', currentUser);
-    
-    if (currentUser) {
+  // Récupérer l'utilisateur depuis localStorage
+  const storedUser = localStorage.getItem('sosgouv_user');
+  
+  if (storedUser) {
+    try {
+      currentUser = JSON.parse(storedUser);
+      console.log('✅ Utilisateur récupéré depuis localStorage');
       console.log('✅ ID utilisateur:', currentUser.id);
-      console.log('✅ Email:', currentUser.email);
-    } else {
-      console.warn('⚠️ Aucun utilisateur connecté');
+      console.log('✅ Username:', currentUser.username);
+    } catch (error) {
+      console.error('❌ Erreur parsing localStorage:', error);
+      currentUser = null;
     }
-    
-  } catch (error) {
-    console.error('❌ Erreur lors de la récupération de l\'utilisateur:', error);
+  } else {
+    console.warn('⚠️ Aucun utilisateur dans localStorage');
     currentUser = null;
   }
   
