@@ -213,9 +213,19 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = 'https://ubttetrqvvbcgvwjbylr.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Utiliser l'instance Supabase GLOBALE si elle existe
+let supabase;
+if (window.supabaseClient) {
+  console.log('📌 Utilisation du client Supabase global');
+  supabase = window.supabaseClient;
+} else if (window.supabase && typeof window.supabase.createClient === 'function') {
+  console.log('📌 Création d\'un nouveau client Supabase');
+  const SUPABASE_URL = 'https://ubttetrqvvbcgvwjbylr.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} else {
+  console.error('❌ Supabase non disponible');
+}
 
 let allGovernments = [];
 let allPersonalities = [];
