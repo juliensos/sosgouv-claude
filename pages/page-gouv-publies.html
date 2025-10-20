@@ -1,9 +1,16 @@
 <!-- ============================================ -->
-<!-- SOS-GOUV - Page Gouvernements Publiés (CORRIGÉE) -->
-<!-- Affiche la liste des gouvernements depuis Supabase -->
+<!-- SOS-GOUV - Page Gouvernements Publiés (VERSION FINALE) -->
+<!-- Vote par cœurs + Filtres natifs + Liens personnalités -->
 <!-- ============================================ -->
 
 <style>
+/* Affichage forcé de la page */
+.page.gouv-publi-s {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
 /* Fontello Icons */
 @font-face {
   font-family: 'fontello';
@@ -32,16 +39,11 @@
 
 .icon-paper-plane:before { content: '\e800'; }
 .icon-search:before { content: '\e801'; }
-.icon-heart:before { content: '\e802'; }
-.icon-heart-filled:before { content: '\e803'; }
 .icon-heart-empty:before { content: '\e808'; }
+.icon-heart-filled:before { content: '\e803'; }
 .icon-pin:before { content: '\e80a'; }
 .icon-pin-outline:before { content: '\e80b'; }
 .icon-user:before { content: '\e818'; }
-.icon-star:before { content: '\e816'; }
-.icon-star-filled:before { content: '\e817'; }
-.icon-star-empty:before { content: '\e807'; }
-.icon-mail:before { content: '\e826'; }
 .icon-eye:before { content: '\e84a'; }
 .icon-plus:before { content: '\e823'; }
 .icon-list:before { content: '\e84e'; }
@@ -51,12 +53,68 @@
 .nowrap {
   white-space: nowrap;
 }
+
+/* Style pour les selects natifs */
+.filter-select {
+  padding: 10px 35px 10px 15px;
+  border: 2px solid var(--sos-grey-3, #ddd);
+  border-radius: 5px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+}
+
+.filter-select:hover {
+  border-color: var(--sos-grey-2, #999);
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--color, #667eea);
+}
+
+/* Système de vote avec cœurs CLIQUABLES */
+.rating-hearts {
+  display: flex;
+  gap: 5px;
+  font-size: 1.5em;
+  cursor: pointer;
+}
+
+.rating-hearts i {
+  color: #ddd;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.rating-hearts i:hover,
+.rating-hearts i.filled {
+  color: #ff6b6b;
+}
+
+/* Lien personnalité */
+.personality-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.personality-link:hover {
+  color: var(--sos-pink, #ff6b6b);
+  text-decoration: underline;
+}
 </style>
 
 <div class="page gouv-publi-s">
   <div class="div-govglobal">
     
-    <!-- Menu boutons (LIENS CORRIGÉS) -->
+    <!-- Menu boutons -->
     <div class="div-gov-menu">
       <a href="page-ajouter-gouvernement.html" class="_w-link-bloc-button w-inline-block">
         <div class="text-block-52"><i class="icon-plus"></i></div>
@@ -77,33 +135,26 @@
       <h3 class="heading-3-gov">Gouvernements publiés</h3>
     </div>
 
-    <!-- Filtres -->
+    <!-- Filtres (SELECTS NATIFS) -->
     <div class="_w-selecta">
-      <!-- Dropdown Type -->
-      <div data-hover="false" data-delay="0" class="dropdown-4-copy w-dropdown">
-        <div class="_w-dropdown-copy w-dropdown-toggle">
-          <div class="fontello-icon grey"><i class="icon-list"></i></div>
-          <div>Type</div>
-        </div>
-        <nav class="dropdown-list-4 w-dropdown-list">
-          <a href="#" class="_w-dropdown-left _0 w-dropdown-link" onclick="setFilter('type', 'all'); return false;">Tous</a>
-          <a href="#" class="_w-dropdown-left w-dropdown-link" onclick="setFilter('type', 'classique'); return false;">Classique</a>
-          <a href="#" class="_w-dropdown-left w-dropdown-link" onclick="setFilter('type', 'hybride'); return false;">Hybride</a>
-        </nav>
+      <!-- Select Type -->
+      <div style="display: flex; flex-direction: column; gap: 5px;">
+        <label style="font-size: 12px; color: var(--sos-grey-1);">Type</label>
+        <select id="filterType" class="filter-select" onchange="applyFilters()">
+          <option value="all">Tous</option>
+          <option value="classique">Classique</option>
+          <option value="hybride">Hybride</option>
+        </select>
       </div>
 
-      <!-- Dropdown Trier par -->
-      <div data-hover="false" data-delay="0" class="dropdown-4-copy w-dropdown">
-        <div class="_w-dropdown-copy w-dropdown-toggle">
-          <div class="fontello-icon grey"><i class="icon-list"></i></div>
-          <div>Trier par</div>
-        </div>
-        <nav class="w-dropdown-list">
-          <a href="#" class="_w-dropdown-left _0 w-dropdown-link" onclick="setFilter('sort', 'recent'); return false;">Plus récents</a>
-          <a href="#" class="_w-dropdown-left w-dropdown-link" onclick="setFilter('sort', 'rating'); return false;">Mieux notés</a>
-          <a href="#" class="_w-dropdown-left w-dropdown-link" onclick="setFilter('sort', 'votes'); return false;">Plus votés</a>
-          <a href="#" class="_w-dropdown-left _2 w-dropdown-link" onclick="setFilter('sort', 'likes'); return false;">Popularité des membres</a>
-        </nav>
+      <!-- Select Trier par -->
+      <div style="display: flex; flex-direction: column; gap: 5px;">
+        <label style="font-size: 12px; color: var(--sos-grey-1);">Trier par</label>
+        <select id="filterSort" class="filter-select" onchange="applyFilters()">
+          <option value="recent">Plus récents</option>
+          <option value="rating">Mieux notés</option>
+          <option value="votes">Plus votés</option>
+        </select>
       </div>
 
       <!-- Checkbox Prêt à gouverner -->
@@ -128,60 +179,42 @@
   </div>
 </div>
 
-<!-- Modal Détails (REFAIT AVEC LES CODES GRAPHIQUES DU BLOC GOV) -->
+<!-- Modal Détails -->
 <div id="modalDetails" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; overflow-y: auto; padding: 20px;">
   <div style="max-width: 900px; margin: 40px auto; background: white; border-radius: 10px; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
     <button onclick="closeModal()" style="position: absolute; top: 15px; right: 15px; background: var(--red); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; z-index: 10000;">
       <i class="icon-cancel"></i>
     </button>
-    <div id="modalContent" style="padding: 0;">
-      <!-- Contenu généré dynamiquement -->
-    </div>
+    <div id="modalContent" style="padding: 0;"></div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ============================================
-// Configuration Supabase
-// ============================================
 const SUPABASE_URL = 'https://ubttetrqvvbcgvwjbylr.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ============================================
-// Variables globales
-// ============================================
 let allGovernments = [];
 let allPersonalities = [];
-let currentFilters = {
-  type: 'all',
-  sort: 'recent',
-  pret: false
-};
-let pinnedGovs = JSON.parse(localStorage.getItem('sosgouv_pinned') || '[]');
+let currentUser = null;
 let userVotes = JSON.parse(localStorage.getItem('sosgouv_votes') || '{}');
+let pinnedGovs = JSON.parse(localStorage.getItem('sosgouv_pinned') || '[]');
 
-// ============================================
-// Initialisation
-// ============================================
 async function init() {
   console.log('🚀 Initialisation de la page gouvernements...');
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  currentUser = user;
+  
   await loadPersonalities();
   await loadGovernments();
 }
 
-// ============================================
-// Charger les personnalités
-// ============================================
 async function loadPersonalities() {
   try {
-    const { data, error } = await supabase
-      .from('personalities')
-      .select('*');
-    
+    const { data, error } = await supabase.from('personalities').select('*');
     if (error) throw error;
-    
     allPersonalities = data || [];
     console.log(`✅ ${allPersonalities.length} personnalités chargées`);
   } catch (error) {
@@ -190,9 +223,6 @@ async function loadPersonalities() {
   }
 }
 
-// ============================================
-// Charger les gouvernements (SANS DONNÉES DE TEST)
-// ============================================
 async function loadGovernments() {
   try {
     const { data: govData, error: govError } = await supabase
@@ -202,22 +232,33 @@ async function loadGovernments() {
     
     if (govError) throw govError;
     
-    // Si aucun gouvernement, on affiche juste un message
     if (!govData || govData.length === 0) {
       console.log('ℹ️ Aucun gouvernement trouvé');
       allGovernments = [];
-      applyFilters();
+      renderGovernments([]);
       return;
     }
     
-    // Charger les positions pour chaque gouvernement
     for (let gov of govData) {
-      const { data: positions, error: posError } = await supabase
+      const { data: positions } = await supabase
         .from('government_positions')
         .select('*')
         .eq('government_id', gov.id);
-      
       gov.positions = positions || [];
+      
+      const { data: votes } = await supabase
+        .from('government_votes')
+        .select('rating')
+        .eq('government_id', gov.id);
+      
+      if (votes && votes.length > 0) {
+        const sum = votes.reduce((acc, v) => acc + v.rating, 0);
+        gov.rating = sum / votes.length;
+        gov.votes_count = votes.length;
+      } else {
+        gov.rating = 0;
+        gov.votes_count = 0;
+      }
     }
     
     allGovernments = govData;
@@ -230,42 +271,31 @@ async function loadGovernments() {
   }
 }
 
-// ============================================
-// Appliquer les filtres
-// ============================================
-function setFilter(type, value) {
-  currentFilters[type] = value;
-  applyFilters();
-}
-
 function applyFilters() {
-  currentFilters.pret = document.getElementById('filterPret').checked;
+  const type = document.getElementById('filterType').value;
+  const sort = document.getElementById('filterSort').value;
+  const pret = document.getElementById('filterPret').checked;
+  
+  document.getElementById('filterPretCheckbox').classList.toggle('w--redirected-checked', pret);
   
   let filtered = [...allGovernments];
   
-  // Filtre par type
-  if (currentFilters.type !== 'all') {
-    filtered = filtered.filter(g => g.type === currentFilters.type);
+  if (type !== 'all') {
+    filtered = filtered.filter(g => g.type === type);
   }
   
-  // Filtre prêt à gouverner
-  if (currentFilters.pret) {
+  if (pret) {
     filtered = filtered.filter(g => g.status === 'public');
   }
   
-  // Tri
   filtered.sort((a, b) => {
-    switch (currentFilters.sort) {
+    switch (sort) {
       case 'recent':
         return new Date(b.created_at) - new Date(a.created_at);
       case 'rating':
         return (b.rating || 0) - (a.rating || 0);
       case 'votes':
-        const votesA = Object.keys(userVotes).filter(k => k.startsWith(a.id)).length;
-        const votesB = Object.keys(userVotes).filter(k => k.startsWith(b.id)).length;
-        return votesB - votesA;
-      case 'likes':
-        return calculateTotalLikes(b) - calculateTotalLikes(a);
+        return (b.votes_count || 0) - (a.votes_count || 0);
       default:
         return 0;
     }
@@ -274,25 +304,6 @@ function applyFilters() {
   renderGovernments(filtered);
 }
 
-// ============================================
-// Calculer les likes totaux
-// ============================================
-function calculateTotalLikes(gov) {
-  let total = 0;
-  if (gov.positions) {
-    gov.positions.forEach(pos => {
-      const pers = allPersonalities.find(p => p.id === pos.personality_id);
-      if (pers && pers.nombre_likes) {
-        total += pers.nombre_likes;
-      }
-    });
-  }
-  return total;
-}
-
-// ============================================
-// Afficher les gouvernements
-// ============================================
 function renderGovernments(governments) {
   const container = document.getElementById('governmentsContainer');
   
@@ -313,23 +324,17 @@ function renderGovernments(governments) {
   container.innerHTML = governments.map(gov => renderGovernmentCard(gov)).join('');
 }
 
-// ============================================
-// Rendu d'une carte gouvernement (ICÔNES FONTELLO + NOWRAP)
-// ============================================
 function renderGovernmentCard(gov) {
-  const totalLikes = calculateTotalLikes(gov);
   const isPinned = pinnedGovs.includes(gov.id);
   const date = new Date(gov.created_at).toLocaleDateString('fr-FR');
+  const myVote = userVotes[gov.id] || 0;
   
-  // Statut et type (NOWRAP CORRIGÉ)
   const statusBadge = gov.status === 'public' 
     ? '<div class="nowrap _w-courant _w-bold _w-vert">Prêt à gouverner</div>'
     : '<div class="nowrap _w-courant _w-grey">En attente</div>';
   
-  const typeClass = gov.type === 'classique' ? 'classique' : 
-                   gov.type === 'hybride' ? 'fiche' : 'note-moy';
+  const typeClass = gov.type === 'classique' ? 'classique' : 'fiche';
   
-  // Membres (max 5)
   const positions = gov.positions || [];
   const displayPositions = positions.slice(0, 5);
   const hasMore = positions.length > 5;
@@ -340,7 +345,9 @@ function renderGovernmentCard(gov) {
     
     return `
       <div class="_w-courant-div">
-        <div class="_w-courant _w-bold">${pers.firstname} ${pers.name}</div>
+        <a href="page-personalité.html?id=${pers.id}" class="personality-link">
+          <div class="_w-courant _w-bold">${pers.firstname} ${pers.name}</div>
+        </a>
         <div class="div-block-214">
           <div class="_w-courant _w-grey">${pos.title}</div>
         </div>
@@ -348,16 +355,21 @@ function renderGovernmentCard(gov) {
     `;
   }).join('');
   
-  // Note moyenne (NOWRAP AJOUTÉ)
   const rating = gov.rating || 0;
-  const starsHTML = Array(5).fill(0).map((_, i) => 
-    i < Math.round(rating) ? '<i class="icon-star-filled"></i>' : '<i class="icon-star-empty"></i>'
+  const votesCount = gov.votes_count || 0;
+  
+  const heartsDisplay = Array(5).fill(0).map((_, i) => 
+    i < Math.round(rating) ? '<i class="icon-heart-filled"></i>' : '<i class="icon-heart-empty"></i>'
   ).join('');
+  
+  const heartsVote = Array.from({length: 5}, (_, i) => {
+    const filled = i < myVote;
+    return `<i class="icon-heart-${filled ? 'filled' : 'empty'}" onclick="voteForGov('${gov.id}', ${i + 1})" style="color: ${filled ? '#ff6b6b' : '#ddd'};"></i>`;
+  }).join('');
   
   return `
     <div class="gov-bloc">
       <div class="bloc-gov-list">
-        <!-- En-tête -->
         <div class="bloc-en-tete">
           <h4 class="heading-4">${gov.name}</h4>
           <div class="_w-courant-div">
@@ -366,62 +378,46 @@ function renderGovernmentCard(gov) {
           </div>
         </div>
         
-        <!-- Description -->
-        ${gov.comment ? `
-          <div class="descript">
-            <p class="paragraph-2">${gov.comment}</p>
-          </div>
-        ` : ''}
+        ${gov.comment ? `<div class="descript"><p class="paragraph-2">${gov.comment}</p></div>` : ''}
         
-        <!-- Membres (max 5) -->
         <div class="membres">
           ${membersHTML}
           ${hasMore ? `<div class="_w-courant _w-grey" style="margin-top: 10px;"><i class="icon-user"></i> + ${positions.length - 5} autres membres...</div>` : ''}
         </div>
         
-        <!-- Bouton Détail -->
         <div class="detail" onclick="showDetails('${gov.id}')">
           <div class="fontello-white"><i class="icon-eye"></i></div>
           <div class="mini-current mini-bold black">Détail</div>
         </div>
       </div>
       
-      <!-- Infos et actions -->
       <div class="block-gov-infos">
         <div class="infos">
-          <!-- Étoiles -->
           <div class="_w-courant-div">
-            <div class="fontello-rose">${starsHTML}</div>
+            <div class="_w-courant _w-mini _w-white">Mon vote</div>
+            <div class="rating-hearts">${heartsVote}</div>
           </div>
           
-          <!-- Nombre de votes -->
+          <div class="_w-courant-div">
+            <div class="_w-courant _w-mini _w-white">Note moyenne</div>
+            <div class="fontello-rose">${heartsDisplay}</div>
+          </div>
+          
           <div class="_w-courant-div">
             <div class="_w-courant _w-mini _w-white">Nombre de votes</div>
-            <div class="_w-courant _w-bold _w-pink"><i class="icon-heart-filled"></i> ${Object.keys(userVotes).filter(k => k === gov.id).length}</div>
+            <div class="_w-courant _w-bold _w-pink">${votesCount}</div>
           </div>
           
-          <!-- Type -->
           <div class="_w-courant-div">
             <div class="_w-courant _w-mini">Type</div>
             <div class="mini-current ${typeClass}">${gov.type}</div>
           </div>
           
-          <!-- Date et auteur -->
           <div class="_w-courant-div">
-            <div class="_w-courant _w-mini _w-white">Publié le ${date} par</div>
-            <a href="#" class="_w-user"><i class="icon-user"></i> utilisateur</a>
+            <div class="_w-courant _w-mini _w-white">Publié le ${date}</div>
           </div>
-          
-          <!-- Likes totaux -->
-          ${totalLikes > 0 ? `
-            <div class="_w-courant-div">
-              <div class="_w-courant _w-mini">Likes cumulés</div>
-              <div class="_w-courant _w-bold _w-pink"><i class="icon-heart"></i> ${totalLikes}</div>
-            </div>
-          ` : ''}
         </div>
         
-        <!-- Actions (ICÔNES FONTELLO) -->
         <div class="send-et-pin">
           <div class="envoyer" onclick="shareByEmail('${gov.id}')">
             <div class="fontello-white"><i class="icon-paper-plane"></i></div>
@@ -437,54 +433,73 @@ function renderGovernmentCard(gov) {
   `;
 }
 
-// ============================================
-// Afficher les détails (MODAL REFAIT AVEC CODES GOV BLOC)
-// ============================================
+async function voteForGov(govId, rating) {
+  if (!currentUser) {
+    alert('Vous devez être connecté pour voter');
+    return;
+  }
+  
+  try {
+    const { error } = await supabase
+      .from('government_votes')
+      .upsert({
+        government_id: govId,
+        user_id: currentUser.id,
+        rating: rating
+      }, {
+        onConflict: 'government_id,user_id'
+      });
+    
+    if (error) throw error;
+    
+    userVotes[govId] = rating;
+    localStorage.setItem('sosgouv_votes', JSON.stringify(userVotes));
+    
+    await loadGovernments();
+    
+  } catch (error) {
+    console.error('❌ Erreur vote:', error);
+    alert('Erreur lors du vote');
+  }
+}
+
 function showDetails(govId) {
   const gov = allGovernments.find(g => g.id === govId);
   if (!gov) return;
   
   const positions = gov.positions || [];
-  const totalLikes = calculateTotalLikes(gov);
   const date = new Date(gov.created_at).toLocaleDateString('fr-FR');
   const rating = gov.rating || 0;
   
-  // Stars
-  const starsHTML = Array(5).fill(0).map((_, i) => 
-    i < Math.round(rating) ? '<i class="icon-star-filled"></i>' : '<i class="icon-star-empty"></i>'
-  ).join('');
-  
-  // Status badge
   const statusBadge = gov.status === 'public' 
     ? '<div class="nowrap _w-courant _w-bold _w-vert">Prêt à gouverner</div>'
     : '<div class="nowrap _w-courant _w-grey">En attente</div>';
   
-  // Type class
-  const typeClass = gov.type === 'classique' ? 'classique' : 
-                   gov.type === 'hybride' ? 'fiche' : 'note-moy';
+  const typeClass = gov.type === 'classique' ? 'classique' : 'fiche';
   
-  // Members list
   const membersHTML = positions.map(pos => {
     const pers = allPersonalities.find(p => p.id === pos.personality_id);
     if (!pers) return '';
     
     return `
       <div class="_w-courant-div" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
-        <div class="_w-courant _w-bold" style="font-size: 1.1em;">${pers.firstname} ${pers.name}</div>
+        <a href="page-personalité.html?id=${pers.id}" class="personality-link">
+          <div class="_w-courant _w-bold" style="font-size: 1.1em;">${pers.firstname} ${pers.name}</div>
+        </a>
         <div class="div-block-214">
           <div class="_w-courant _w-grey">${pos.sector} - ${pos.title}</div>
-          ${pos.subsectors && pos.subsectors.length > 0 ? `<div class="_w-courant _w-mini" style="margin-top: 5px;"><em>Sous-secteurs: ${pos.subsectors.join(', ')}</em></div>` : ''}
-          ${pers.nombre_likes ? `<div class="_w-courant _w-mini" style="margin-top: 5px;"><i class="icon-heart"></i> ${pers.nombre_likes} likes</div>` : ''}
         </div>
       </div>
     `;
   }).join('');
   
-  // Modal content using gov-bloc structure
+  const heartsDisplay = Array(5).fill(0).map((_, i) => 
+    i < Math.round(rating) ? '<i class="icon-heart-filled"></i>' : '<i class="icon-heart-empty"></i>'
+  ).join('');
+  
   document.getElementById('modalContent').innerHTML = `
     <div class="gov-bloc" style="border-radius: 10px; overflow: hidden; margin: 0;">
       <div class="bloc-gov-list" style="padding: 30px;">
-        <!-- En-tête -->
         <div class="bloc-en-tete">
           <h4 class="heading-4">${gov.name}</h4>
           <div class="_w-courant-div">
@@ -493,15 +508,13 @@ function showDetails(govId) {
           </div>
         </div>
         
-        <!-- Description -->
         ${gov.comment ? `
           <div class="descript" style="background: #fff9e6; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid var(--sos-yellow);">
-            <h3 style="margin: 0 0 10px 0; color: var(--color);"><i class="icon-chat"></i> Vision de l'auteur</h3>
+            <h3 style="margin: 0 0 10px 0; color: var(--color);">💬 Vision de l'auteur</h3>
             <p class="paragraph-2" style="margin: 0;">${gov.comment}</p>
           </div>
         ` : ''}
         
-        <!-- Membres complets -->
         <div class="membres">
           <h3 style="margin: 20px 0 15px 0; color: var(--color); border-bottom: 2px solid #e0e0e0; padding-bottom: 10px;">
             <i class="icon-user"></i> Composition du Gouvernement (${positions.length})
@@ -510,33 +523,21 @@ function showDetails(govId) {
         </div>
       </div>
       
-      <!-- Infos -->
       <div class="block-gov-infos">
         <div class="infos">
-          <!-- Étoiles -->
           <div class="_w-courant-div">
-            <div class="fontello-rose">${starsHTML}</div>
+            <div class="fontello-rose">${heartsDisplay}</div>
           </div>
           
-          <!-- Type -->
           <div class="_w-courant-div">
             <div class="_w-courant _w-mini">Type</div>
             <div class="mini-current ${typeClass}">${gov.type}</div>
           </div>
           
-          <!-- Date -->
           <div class="_w-courant-div">
             <div class="_w-courant _w-mini _w-white">Publié le</div>
             <div class="_w-courant _w-bold">${date}</div>
           </div>
-          
-          <!-- Likes totaux -->
-          ${totalLikes > 0 ? `
-            <div class="_w-courant-div">
-              <div class="_w-courant _w-mini">Likes cumulés</div>
-              <div class="_w-courant _w-bold _w-pink"><i class="icon-heart"></i> ${totalLikes}</div>
-            </div>
-          ` : ''}
         </div>
       </div>
     </div>
@@ -549,27 +550,17 @@ function closeModal() {
   document.getElementById('modalDetails').style.display = 'none';
 }
 
-// ============================================
-// Épingler/Désépingler
-// ============================================
 function togglePin(govId) {
   const index = pinnedGovs.indexOf(govId);
-  
   if (index > -1) {
     pinnedGovs.splice(index, 1);
-    alert('📌 Gouvernement retiré de vos épinglés');
   } else {
     pinnedGovs.push(govId);
-    alert('✅ Gouvernement épinglé !');
   }
-  
   localStorage.setItem('sosgouv_pinned', JSON.stringify(pinnedGovs));
   applyFilters();
 }
 
-// ============================================
-// Partager par email
-// ============================================
 function shareByEmail(govId) {
   const gov = allGovernments.find(g => g.id === govId);
   if (!gov) return;
@@ -577,34 +568,16 @@ function shareByEmail(govId) {
   const email = prompt('📧 Entrez l\'adresse email :');
   if (!email) return;
   
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    alert('❌ Email invalide');
-    return;
-  }
-  
   const subject = encodeURIComponent(`Découvrez "${gov.name}" sur SOS-GOUV`);
-  const body = encodeURIComponent(
-    `Bonjour,\n\nDécouvrez ce gouvernement sur SOS-GOUV :\n\n` +
-    `"${gov.name}"\n` +
-    `${gov.comment ? `\n${gov.comment}\n` : ''}` +
-    `\nCordialement`
-  );
+  const body = encodeURIComponent(`Bonjour,\n\nDécouvrez ce gouvernement sur SOS-GOUV :\n\n"${gov.name}"\n\nCordialement`);
   
   window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-  alert('✅ Email préparé !');
 }
 
-// ============================================
-// Afficher une erreur
-// ============================================
 function showError() {
   document.getElementById('governmentsContainer').innerHTML = `
     <div style="padding: 40px; text-align: center;">
       <h3 style="color: var(--red); margin-bottom: 20px;"><i class="icon-cancel"></i> Erreur de chargement</h3>
-      <p style="color: var(--sos-grey-1); margin-bottom: 20px;">
-        Impossible de charger les gouvernements depuis Supabase
-      </p>
       <button onclick="init()" style="background: var(--sos-yellow); color: #000; padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer; font-weight: bold;">
         <i class="icon-search"></i> Réessayer
       </button>
@@ -612,17 +585,11 @@ function showError() {
   `;
 }
 
-// ============================================
-// Fermer modal si clic en dehors
-// ============================================
 document.addEventListener('click', (e) => {
   if (e.target.id === 'modalDetails') {
     closeModal();
   }
 });
 
-// ============================================
-// Lancer l'initialisation
-// ============================================
 init();
 </script>
