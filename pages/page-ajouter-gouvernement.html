@@ -547,7 +547,7 @@
             alert('💾 Brouillon sauvegardé : ' + name);
         };
 
- window.submitGovernment = async function() {
+        window.submitGovernment = async function() {
             const name = document.getElementById('govName').value;
             const comment = document.getElementById('govComment').value;
             
@@ -556,10 +556,21 @@
                 return;
             }
 
-            // Récupérer l'utilisateur connecté
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
+            // Récupérer l'utilisateur depuis localStorage (méthode de votre app)
+            const userStr = localStorage.getItem('sosgouv_user');
+            if (!userStr) {
                 alert('⚠️ Vous devez être connecté pour publier un gouvernement');
+                return;
+            }
+
+            let userId;
+            try {
+                const userData = JSON.parse(userStr);
+                userId = userData.id;
+                console.log('✅ Utilisateur connecté:', userData.username || userData.email);
+            } catch (error) {
+                console.error('❌ Erreur lecture utilisateur:', error);
+                alert('⚠️ Erreur: impossible de lire les données utilisateur');
                 return;
             }
 
@@ -616,7 +627,7 @@
                         name: name,
                         type: 'classique',
                         comment: comment || null,
-                        created_by: user.id,
+                        created_by: userId,
                         status: 'published',
                         rating: 0
                     }])
@@ -710,9 +721,9 @@
         }
 
         // Initialisation AVEC DÉLAI pour le router
-setTimeout(() => {
-  init();
-}, 200);
+        setTimeout(() => {
+            init();
+        }, 200);
     </script>
 </body>
 </html>
