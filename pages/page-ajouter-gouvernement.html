@@ -211,16 +211,19 @@
     <script src="https://cdn.prod.website-files.com/68ecfda4d9b3270b98426ff5/js/webflow.8f7aba30.b9f83e0e165b56bf.js" type="text/javascript"></script>
 
     <script>
-        // Éviter les duplications lors de la navigation via le router
-        if (!window.SOSGOUV_INITIALIZED) {
-            window.SOSGOUV_INITIALIZED = true;
-            
-            const SUPABASE_URL = 'https://ubttetrqvvbcgvwjbylr.supabase.co';
-            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
-            window.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Namespace unique pour cette page pour éviter les conflits
+        if (!window.GOV_CREATE_PAGE) {
+            window.GOV_CREATE_PAGE = {
+                initialized: false,
+                personalities: [],
+                governmentData: { positions: [] },
+                currentPositionIndex: null,
+                ALL_SUBSECTORS: []
+            };
         }
 
-        const supabase = window.supabase;
+        // Utiliser le client Supabase global de l'app
+        const supabase = window.supabaseClient || window.supabase;
 
         // Structure des 22 ministères classiques
         const CLASSIC_POSITIONS = [
@@ -248,28 +251,20 @@
             { sector: 'Fonction publique', title: 'Ministre de la Transformation et de la Fonction publiques', subsectors: ['Administration publique', 'Modernisation', 'Numérique', 'Simplification'] }
         ];
 
-        // Construction de ALL_SUBSECTORS (réinitialisable)
-        window.ALL_SUBSECTORS = [];
+        // Construction de ALL_SUBSECTORS dans le namespace
+        window.GOV_CREATE_PAGE.ALL_SUBSECTORS = [];
         CLASSIC_POSITIONS.forEach(pos => {
             pos.subsectors.forEach(sub => {
-                window.ALL_SUBSECTORS.push({ sector: pos.sector, subsector: sub });
+                window.GOV_CREATE_PAGE.ALL_SUBSECTORS.push({ sector: pos.sector, subsector: sub });
             });
         });
-
-        // Variables réinitialisables
-        window.governmentPersonalities = [];
-        window.governmentData = { positions: [] };
-        window.currentPositionIndex = null;
-
-        const personalities = window.governmentPersonalities;
-        const governmentData = window.governmentData;
 
         // Charger les personnalités
         async function loadPersonalities() {
             const { data, error } = await supabase.from('personalities').select('*').order('name');
             if (data) {
-                window.governmentPersonalities = data;
-                console.log('✅ Personnalités chargées:', window.governmentPersonalities.length);
+                window.GOV_CREATE_PAGE.personalities = data;
+                console.log('✅ Personnalités chargées:', window.GOV_CREATE_PAGE.personalities.length);
             } else {
                 console.error('❌ Erreur chargement:', error);
             }
@@ -278,7 +273,7 @@
         // Générer les options groupées par profession
         function getPersonalityOptions() {
             const grouped = {};
-            window.governmentPersonalities.forEach(p => {
+            window.GOV_CREATE_PAGE.personalities.forEach(p => {
                 const prof = p.profession || 'Sans profession';
                 if (!grouped[prof]) grouped[prof] = [];
                 grouped[prof].push(p);
@@ -365,7 +360,7 @@
                 return;
             }
 
-            const filtered = window.governmentPersonalities.filter(p => 
+            const filtered = window.GOV_CREATE_PAGE.personalities.filter(p => 
                 p.name.toLowerCase().startsWith(query) || 
                 p.firstname.toLowerCase().startsWith(query)
             );
@@ -384,7 +379,7 @@
 
         // Sélectionner personnalité
         window.selectPersonality = function(index, personalityId) {
-            const p = window.governmentPersonalities.find(per => String(per.id) === String(personalityId));
+            const p = window.GOV_CREATE_PAGE.personalities.find(per => String(per.id) === String(personalityId));
             if (!p) return;
 
             const searchInput = document.getElementById(`search-${index}`);
@@ -400,8 +395,10 @@
                 selected.classList.add('show');
             }
 
-            if (!window.governmentData.positions[index]) window.governmentData.positions[index] = {};
-            window.governmentData.positions[index].personalityId = personalityId;
+            if (!window.GOV_CREATE_PAGE.governmentData.positions[index]) {
+                window.GOV_CREATE_PAGE.governmentData.positions[index] = {};
+            }
+            window.GOV_CREATE_PAGE.governmentData.positions[index].personalityId = personalityId;
         };
 
         window.selectFromDropdown = function(index) {
@@ -410,7 +407,7 @@
         };
 
         window.openAddPersonalityModal = function(index) {
-            window.currentPositionIndex = index;
+            window.GOV_CREATE_PAGE.currentPositionIndex = index;
             document.getElementById('addPersonalityModal').classList.add('show');
         };
 
@@ -435,9 +432,9 @@
                 return;
             }
 
-            window.governmentPersonalities.push(data[0]);
+            window.GOV_CREATE_PAGE.personalities.push(data[0]);
             closeModal();
-            selectPersonality(window.currentPositionIndex, data[0].id);
+            selectPersonality(window.GOV_CREATE_PAGE.currentPositionIndex, data[0].id);
             renderPositions();
             alert('✅ Personnalité ajoutée !');
         };
@@ -447,7 +444,7 @@
             const container = document.getElementById('delegatesContainer');
             const id = Date.now();
 
-            const subsectorsOptions = window.ALL_SUBSECTORS.map(item => 
+            const subsectorsOptions = window.GOV_CREATE_PAGE.ALL_SUBSECTORS.map(item => 
                 `<option value="${item.sector}|${item.subsector}">${item.sector} - ${item.subsector}</option>`
             ).join('');
 
@@ -507,7 +504,7 @@
                 return;
             }
 
-            const filtered = window.governmentPersonalities.filter(p => 
+            const filtered = window.GOV_CREATE_PAGE.personalities.filter(p => 
                 p.name.toLowerCase().startsWith(query) || 
                 p.firstname.toLowerCase().startsWith(query)
             );
@@ -525,7 +522,7 @@
         };
 
         window.selectDelegatePersonality = function(delegateId, personalityId) {
-            const p = window.governmentPersonalities.find(per => String(per.id) === String(personalityId));
+            const p = window.GOV_CREATE_PAGE.personalities.find(per => String(per.id) === String(personalityId));
             if (!p) return;
 
             const searchInput = document.getElementById(`delegate-search-${delegateId}`);
@@ -589,14 +586,14 @@
             // Collecter les positions
             const positions = [];
             CLASSIC_POSITIONS.forEach((pos, index) => {
-                if (window.governmentData.positions[index]?.personalityId) {
+                if (window.GOV_CREATE_PAGE.governmentData.positions[index]?.personalityId) {
                     const customTitle = document.getElementById(`custom-${index}`)?.value || '';
                     positions.push({
                         sector: pos.sector,
                         title: pos.title,
                         custom_title: customTitle,
                         subsectors: pos.subsectors, // Array directement, pas de join !
-                        personality_id: window.governmentData.positions[index].personalityId
+                        personality_id: window.GOV_CREATE_PAGE.governmentData.positions[index].personalityId
                     });
                 }
             });
@@ -707,7 +704,7 @@
                 // Réinitialiser le formulaire
                 document.getElementById('govName').value = '';
                 document.getElementById('govComment').value = '';
-                window.governmentData.positions = [];
+                window.GOV_CREATE_PAGE.governmentData.positions = [];
                 renderPositions();
                 document.getElementById('delegatesContainer').innerHTML = '';
 
