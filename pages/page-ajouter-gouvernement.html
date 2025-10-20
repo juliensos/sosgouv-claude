@@ -547,19 +547,33 @@
             alert('💾 Brouillon sauvegardé : ' + name);
         };
 
-        window.submitGovernment = function() {
+ window.submitGovernment = async function() {
             const name = document.getElementById('govName').value;
+            const comment = document.getElementById('govComment').value;
+            
             if (!name) {
                 alert('Veuillez donner un nom au gouvernement');
                 return;
             }
 
+            // Récupérer l'utilisateur connecté
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                alert('⚠️ Vous devez être connecté pour publier un gouvernement');
+                return;
+            }
+
+            // Collecter les positions
             const positions = [];
             CLASSIC_POSITIONS.forEach((pos, index) => {
                 if (governmentData.positions[index]?.personalityId) {
+                    const customTitle = document.getElementById(`custom-${index}`)?.value || '';
                     positions.push({
                         sector: pos.sector,
-                        personalityId: governmentData.positions[index].personalityId
+                        title: pos.title,
+                        custom_title: customTitle,
+                        subsectors: pos.subsectors.join(', '), // Format avec virgules
+                        personality_id: governmentData.positions[index].personalityId
                     });
                 }
             });
@@ -569,7 +583,115 @@
                 return;
             }
 
-            alert(`✅ Gouvernement publié !\n${name}\n${positions.length} ministres`);
+            // Collecter les délégués
+            const delegates = [];
+            document.querySelectorAll('[id^="delegate-"]').forEach(card => {
+                if (!card.id.includes('sector') && !card.id.includes('title') && !card.id.includes('search') && !card.id.includes('select') && !card.id.includes('results') && !card.id.includes('selected')) {
+                    const delegateId = card.id.split('-')[1];
+                    const sectorSelect = document.getElementById(`delegate-sector-${delegateId}`);
+                    const titleInput = document.getElementById(`delegate-title-${delegateId}`);
+                    const searchInput = document.getElementById(`delegate-search-${delegateId}`);
+                    
+                    if (sectorSelect?.value && titleInput?.value && searchInput?.dataset.personalityId) {
+                        const [sector, subsector] = sectorSelect.value.split('|');
+                        delegates.push({
+                            sector: sector,
+                            title: titleInput.value,
+                            subsectors: subsector, // Un seul subsector pour les délégués
+                            personality_id: searchInput.dataset.personalityId
+                        });
+                    }
+                }
+            });
+
+            console.log('📤 Publication du gouvernement...');
+            console.log('Positions:', positions.length);
+            console.log('Délégués:', delegates.length);
+
+            try {
+                // 1. Insérer le gouvernement
+                const { data: govData, error: govError } = await supabase
+                    .from('governments')
+                    .insert([{
+                        name: name,
+                        type: 'classique',
+                        comment: comment || null,
+                        created_by: user.id,
+                        status: 'published',
+                        rating: 0
+                    }])
+                    .select();
+
+                if (govError) {
+                    console.error('❌ Erreur gouvernement:', govError);
+                    alert('Erreur lors de la création du gouvernement : ' + govError.message);
+                    return;
+                }
+
+                const governmentId = govData[0].id;
+                console.log('✅ Gouvernement créé:', governmentId);
+
+                // 2. Insérer les positions ministérielles (is_delegate = false)
+                const positionsToInsert = positions.map(pos => ({
+                    government_id: governmentId,
+                    sector: pos.sector,
+                    title: pos.title,
+                    custom_title: pos.custom_title || null,
+                    subsectors: pos.subsectors,
+                    personality_id: pos.personality_id,
+                    is_delegate: false
+                }));
+
+                const { error: posError } = await supabase
+                    .from('government_positions')
+                    .insert(positionsToInsert);
+
+                if (posError) {
+                    console.error('❌ Erreur positions:', posError);
+                    alert('Erreur lors de l\'ajout des positions : ' + posError.message);
+                    return;
+                }
+
+                console.log('✅ Positions créées');
+
+                // 3. Insérer les délégués si présents (is_delegate = true)
+                if (delegates.length > 0) {
+                    const delegatesToInsert = delegates.map(del => ({
+                        government_id: governmentId,
+                        sector: del.sector,
+                        title: del.title,
+                        custom_title: null,
+                        subsectors: del.subsectors,
+                        personality_id: del.personality_id,
+                        is_delegate: true
+                    }));
+
+                    const { error: delError } = await supabase
+                        .from('government_positions')
+                        .insert(delegatesToInsert);
+
+                    if (delError) {
+                        console.error('❌ Erreur délégués:', delError);
+                        alert('Erreur lors de l\'ajout des délégués : ' + delError.message);
+                        return;
+                    } else {
+                        console.log('✅ Délégués créés');
+                    }
+                }
+
+                alert(`✅ Gouvernement publié !\n\n"${name}"\n${positions.length} ministres${delegates.length > 0 ? `\n${delegates.length} délégués` : ''}`);
+                
+                // Réinitialiser le formulaire
+                document.getElementById('govName').value = '';
+                document.getElementById('govComment').value = '';
+                governmentData.positions = [];
+                renderPositions();
+                document.getElementById('delegatesContainer').innerHTML = '';
+
+            } catch (error) {
+                console.error('❌ Erreur:', error);
+                alert('Erreur inattendue : ' + error.message);
+            }
         };
 
         // Fermer autocomplete au clic ailleurs
