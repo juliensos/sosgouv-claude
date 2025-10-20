@@ -2133,6 +2133,25 @@ textarea.w-input, textarea.w-select {
   margin-bottom: 8px;
 }
 
+.w-layout-blockcontainer {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+@media screen and (max-width: 991px) {
+  .w-layout-blockcontainer {
+    max-width: 728px;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .w-layout-blockcontainer {
+    max-width: none;
+  }
+}
+
 h3 {
   margin-top: 0;
   margin-bottom: 0;
@@ -4554,7 +4573,7 @@ a {
   margin-right: auto;
   padding-top: 0;
   padding-bottom: 20px;
-  display: none;
+  display: block;
   position: relative;
 }
 
@@ -4581,12 +4600,12 @@ a {
   margin-left: auto;
   margin-right: auto;
   padding: 0;
-  display: none;
+  display: flex;
 }
 
 .page.liste-personalites {
   border-style: none;
-  display: none;
+  display: block;
 }
 
 .div-block-225 {
