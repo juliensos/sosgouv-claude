@@ -1,6 +1,6 @@
 <!-- ============================================ -->
-<!-- SOS-GOUV - Page Gouvernements Publiés (VERSION FINALE) -->
-<!-- Vote par cœurs + Filtres natifs + Liens personnalités -->
+<!-- SOS-GOUV - Page Gouvernements Publiés (CORRECTIONS FINALES) -->
+<!-- Vote par cœurs + Filtres natifs + Badge conditionnel -->
 <!-- ============================================ -->
 
 <style>
@@ -54,42 +54,66 @@
   white-space: nowrap;
 }
 
-/* Style pour les selects natifs */
+/* Filet en tiret au dessous du gov-bloc */
+.gov-bloc {
+  border-bottom: 2px dashed #e0e0e0 !important;
+  border: none !important;
+  padding-bottom: 20px !important;
+  margin-bottom: 20px !important;
+}
+
+/* Style pour les selects natifs (CORRIGÉ : 12px, sans contour) */
+._w-selecta {
+  display: flex;
+  gap: 15px;
+  align-items: flex-end;
+  margin-bottom: 30px;
+}
+
+._w-selecta > div {
+  flex: 1;
+}
+
 .filter-select {
-  padding: 10px 35px 10px 15px;
-  border: 2px solid var(--sos-grey-3, #ddd);
-  border-radius: 5px;
-  font-size: 14px;
-  background: white;
+  width: 100%;
+  padding: 8px 30px 8px 10px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
   cursor: pointer;
   appearance: none;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 16px;
-}
-
-.filter-select:hover {
-  border-color: var(--sos-grey-2, #999);
+  background-position: right 5px center;
+  background-size: 14px;
 }
 
 .filter-select:focus {
   outline: none;
-  border-color: var(--color, #667eea);
+  background-color: white;
+  border-radius: 5px;
+  box-shadow: 0 0 0 1px #e0e0e0;
 }
 
-/* Système de vote avec cœurs CLIQUABLES */
+.filter-label {
+  font-size: 12px;
+  color: var(--sos-grey-1);
+  margin-bottom: 5px;
+  display: block;
+}
+
+/* Système de vote avec cœurs (ALIGNÉS À GAUCHE, SANS STRETCH) */
 .rating-hearts {
-  display: flex;
-  gap: 5px;
-  font-size: 1.5em;
-  cursor: pointer;
+  display: inline-flex;
+  gap: 3px;
+  font-size: 1.3em;
 }
 
 .rating-hearts i {
   color: #ddd;
   transition: color 0.2s;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .rating-hearts i:hover,
@@ -114,13 +138,13 @@
 <div class="page gouv-publi-s">
   <div class="div-govglobal">
     
-    <!-- Menu boutons -->
+    <!-- Menu boutons (ROUTER LINKS) -->
     <div class="div-gov-menu">
-      <a href="page-ajouter-gouvernement.html" class="_w-link-bloc-button w-inline-block">
+      <a href="#" data-page="ajouter-gouvernement" class="_w-link-bloc-button w-inline-block">
         <div class="text-block-52"><i class="icon-plus"></i></div>
         <div>ajouter un gouvernement</div>
       </a>
-      <a href="page-ajouter-perso.html" class="_w-link-bloc-button w-inline-block">
+      <a href="#" data-page="ajouter-perso" class="_w-link-bloc-button w-inline-block">
         <div class="text-block-52"><i class="icon-user"></i></div>
         <div>ajouter une personnalité</div>
       </a>
@@ -135,11 +159,11 @@
       <h3 class="heading-3-gov">Gouvernements publiés</h3>
     </div>
 
-    <!-- Filtres (SELECTS NATIFS) -->
+    <!-- Filtres (SELECTS NATIFS CORRIGÉS : 12px, sans contour) -->
     <div class="_w-selecta">
       <!-- Select Type -->
-      <div style="display: flex; flex-direction: column; gap: 5px;">
-        <label style="font-size: 12px; color: var(--sos-grey-1);">Type</label>
+      <div>
+        <label class="filter-label">Type</label>
         <select id="filterType" class="filter-select" onchange="applyFilters()">
           <option value="all">Tous</option>
           <option value="classique">Classique</option>
@@ -148,8 +172,8 @@
       </div>
 
       <!-- Select Trier par -->
-      <div style="display: flex; flex-direction: column; gap: 5px;">
-        <label style="font-size: 12px; color: var(--sos-grey-1);">Trier par</label>
+      <div>
+        <label class="filter-label">Trier par</label>
         <select id="filterSort" class="filter-select" onchange="applyFilters()">
           <option value="recent">Plus récents</option>
           <option value="rating">Mieux notés</option>
@@ -285,7 +309,14 @@ function applyFilters() {
   }
   
   if (pret) {
-    filtered = filtered.filter(g => g.status === 'public');
+    // Filtre uniquement les gouvernements où TOUS les membres ont status "OK"
+    filtered = filtered.filter(g => {
+      if (!g.positions || g.positions.length === 0) return false;
+      return g.positions.every(pos => {
+        const pers = allPersonalities.find(p => p.id === pos.personality_id);
+        return pers && pers.status === 'OK';
+      });
+    });
   }
   
   filtered.sort((a, b) => {
@@ -313,7 +344,7 @@ function renderGovernments(governments) {
         <div style="font-size: 48px; margin-bottom: 20px;">🏛️</div>
         <h3>Aucun gouvernement trouvé</h3>
         <p>Soyez le premier à créer un gouvernement !</p>
-        <a href="page-ajouter-gouvernement.html" style="display: inline-block; margin-top: 20px; background: var(--sos-yellow); color: #000; padding: 12px 24px; border-radius: 5px; text-decoration: none; font-weight: bold;">
+        <a href="#" data-page="ajouter-gouvernement" style="display: inline-block; margin-top: 20px; background: var(--sos-yellow); color: #000; padding: 12px 24px; border-radius: 5px; text-decoration: none; font-weight: bold;">
           <i class="icon-plus"></i> Créer un gouvernement
         </a>
       </div>
@@ -324,14 +355,26 @@ function renderGovernments(governments) {
   container.innerHTML = governments.map(gov => renderGovernmentCard(gov)).join('');
 }
 
+// Vérifier si le gouvernement est "prêt à gouverner"
+function isReadyToGovern(gov) {
+  if (!gov.positions || gov.positions.length === 0) return false;
+  
+  return gov.positions.every(pos => {
+    const pers = allPersonalities.find(p => p.id === pos.personality_id);
+    return pers && pers.status === 'OK';
+  });
+}
+
 function renderGovernmentCard(gov) {
   const isPinned = pinnedGovs.includes(gov.id);
   const date = new Date(gov.created_at).toLocaleDateString('fr-FR');
   const myVote = userVotes[gov.id] || 0;
+  const ready = isReadyToGovern(gov);
   
-  const statusBadge = gov.status === 'public' 
+  // Badge "Prêt à gouverner" SEULEMENT si tous les membres ont status OK
+  const statusBadge = ready
     ? '<div class="nowrap _w-courant _w-bold _w-vert">Prêt à gouverner</div>'
-    : '<div class="nowrap _w-courant _w-grey">En attente</div>';
+    : '';
   
   const typeClass = gov.type === 'classique' ? 'classique' : 'fiche';
   
@@ -358,10 +401,7 @@ function renderGovernmentCard(gov) {
   const rating = gov.rating || 0;
   const votesCount = gov.votes_count || 0;
   
-  const heartsDisplay = Array(5).fill(0).map((_, i) => 
-    i < Math.round(rating) ? '<i class="icon-heart-filled"></i>' : '<i class="icon-heart-empty"></i>'
-  ).join('');
-  
+  // Cœurs de vote ALIGNÉS À GAUCHE
   const heartsVote = Array.from({length: 5}, (_, i) => {
     const filled = i < myVote;
     return `<i class="icon-heart-${filled ? 'filled' : 'empty'}" onclick="voteForGov('${gov.id}', ${i + 1})" style="color: ${filled ? '#ff6b6b' : '#ddd'};"></i>`;
@@ -393,26 +433,24 @@ function renderGovernmentCard(gov) {
       
       <div class="block-gov-infos">
         <div class="infos">
+          <!-- Cœurs de vote (SUPPRIMÉ "Mon vote", alignés à gauche) -->
           <div class="_w-courant-div">
-            <div class="_w-courant _w-mini _w-white">Mon vote</div>
             <div class="rating-hearts">${heartsVote}</div>
           </div>
           
-          <div class="_w-courant-div">
-            <div class="_w-courant _w-mini _w-white">Note moyenne</div>
-            <div class="fontello-rose">${heartsDisplay}</div>
-          </div>
-          
+          <!-- Nombre de votes -->
           <div class="_w-courant-div">
             <div class="_w-courant _w-mini _w-white">Nombre de votes</div>
             <div class="_w-courant _w-bold _w-pink">${votesCount}</div>
           </div>
           
+          <!-- Type -->
           <div class="_w-courant-div">
             <div class="_w-courant _w-mini">Type</div>
             <div class="mini-current ${typeClass}">${gov.type}</div>
           </div>
           
+          <!-- Date -->
           <div class="_w-courant-div">
             <div class="_w-courant _w-mini _w-white">Publié le ${date}</div>
           </div>
@@ -470,10 +508,11 @@ function showDetails(govId) {
   const positions = gov.positions || [];
   const date = new Date(gov.created_at).toLocaleDateString('fr-FR');
   const rating = gov.rating || 0;
+  const ready = isReadyToGovern(gov);
   
-  const statusBadge = gov.status === 'public' 
+  const statusBadge = ready
     ? '<div class="nowrap _w-courant _w-bold _w-vert">Prêt à gouverner</div>'
-    : '<div class="nowrap _w-courant _w-grey">En attente</div>';
+    : '';
   
   const typeClass = gov.type === 'classique' ? 'classique' : 'fiche';
   
@@ -493,12 +532,8 @@ function showDetails(govId) {
     `;
   }).join('');
   
-  const heartsDisplay = Array(5).fill(0).map((_, i) => 
-    i < Math.round(rating) ? '<i class="icon-heart-filled"></i>' : '<i class="icon-heart-empty"></i>'
-  ).join('');
-  
   document.getElementById('modalContent').innerHTML = `
-    <div class="gov-bloc" style="border-radius: 10px; overflow: hidden; margin: 0;">
+    <div class="gov-bloc" style="border-radius: 10px; overflow: hidden; margin: 0; border: none !important;">
       <div class="bloc-gov-list" style="padding: 30px;">
         <div class="bloc-en-tete">
           <h4 class="heading-4">${gov.name}</h4>
@@ -525,10 +560,6 @@ function showDetails(govId) {
       
       <div class="block-gov-infos">
         <div class="infos">
-          <div class="_w-courant-div">
-            <div class="fontello-rose">${heartsDisplay}</div>
-          </div>
-          
           <div class="_w-courant-div">
             <div class="_w-courant _w-mini">Type</div>
             <div class="mini-current ${typeClass}">${gov.type}</div>
