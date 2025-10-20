@@ -628,8 +628,8 @@
                         type: 'classique',
                         comment: comment || null,
                         created_by: userId,
-                        status: 'published',
-                        rating: 0
+                        status: 'published'
+                        // Pas de rating à l'insertion - sera calculé avec les votes
                     }])
                     .select();
 
