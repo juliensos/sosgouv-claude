@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOS-GOUV - Proposer Gouvernement Classique</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #667eea;
+            margin: 30px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .gov-info-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .gov-info-section input[type="text"],
+        .gov-info-section textarea {
+            width: 100%;
+            padding: 12px;
+            font-size: 1em;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+
+        .gov-info-section textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .positions-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .position-card {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .position-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .position-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .position-info {
+            flex: 1;
+        }
+
+        .position-line {
+            margin-bottom: 8px;
+        }
+
+        .label-text {
+            display: inline-block;
+            font-weight: bold;
+            color: #667eea;
+            min-width: 100px;
+        }
+
+        .value-text {
+            display: inline;
+            color: #333;
+        }
+
+        .custom-input {
+            display: inline-block;
+            padding: 5px 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            min-width: 300px;
+        }
+
+        .custom-input[readonly] {
+            background: #f8f9fa;
+            border-color: #e0e0e0;
+        }
+
+        .edit-btn {
+            background: #ffa500;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
+
+        .edit-btn:hover {
+            background: #ff8c00;
+        }
+
+        .personality-section {
+            margin-top: 15px;
+        }
+
+        .personality-search {
+            position: relative;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .search-input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .personality-search input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .personality-select {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            background: white;
+        }
+
+        .autocomplete-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+
+        .autocomplete-results.show {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .autocomplete-item:hover {
+            background: #f8f9fa;
+        }
+
+        .add-personality-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .add-personality-btn:hover {
+            background: #218838;
+        }
+
+        .selected-personality {
+            background: #e8f5e9;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .selected-personality.show {
+            display: block;
+        }
+
+        .subsectors {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .delegates-section {
+            background: #f0f4ff;
+            padding: 30px;
+            border-radius: 10px;
+            margin-top: 40px;
+        }
+
+        .delegate-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .delegate-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .add-delegate-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+        }
+
+        .add-delegate-btn:hover {
+            background: #138496;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            margin-top: 5px;
+        }
+
+        .submit-section {
+            margin-top: 40px;
+            text-align: center;
+            padding-top: 30px;
+            border-top: 3px solid #e0e0e0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .submit-btn, .draft-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            border-radius: 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .draft-btn {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        }
+
+        .submit-btn:hover, .draft-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:hover {
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .draft-btn:hover {
+            box-shadow: 0 8px 20px rgba(108, 117, 125, 0.6);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .cancel-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background: #5a6268;
+        }
+
+        .save-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .save-btn:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="position: absolute; top: 10px; right: 10px; background: #667eea; color: white; padding: 5px 10px; border-radius: 5px; font-size: 0.8em; font-weight: bold;">
+            v2.8
+        </div>
+        <h1>🏛️ Proposer un Gouvernement Classique</h1>
+        <p class="subtitle">Composez votre gouvernement idéal avec les ministères traditionnels</p>
+
+        <div class="gov-info-section">
+            <div class="form-group">
+                <label for="govName">📝 Nom du gouvernement :</label>
+                <input type="text" id="govName" placeholder="Ex: Gouvernement de la République Exemplaire">
+            </div>
+
+            <div class="form-group">
+                <label for="govComment">💬 Commentaire de l'auteur (votre vision) :</label>
+                <textarea id="govComment" placeholder="Expliquez votre vision, vos choix, vos priorités..."></textarea>
+            </div>
+        </div>
+
+        <h2 class="section-title">👥 Ministres</h2>
+        <div id="positionsContainer" class="positions-grid"></div>
+
+        <div class="delegates-section">
+            <h2 class="section-title">🎯 Ministres Délégués</h2>
+            <button class="add-delegate-btn" onclick="addDelegate()">
+                ➕ Ajouter un ministre délégué
+            </button>
+            <div id="delegatesContainer"></div>
+        </div>
+
+        <div class="submit-section">
+            <button class="draft-btn" onclick="saveDraft()">💾 Sauvegarder en brouillon</button>
+            <button class="submit-btn" onclick="submitGovernment()">✅ Publier le Gouvernement</button>
+        </div>
+    </div>
+
+    <!-- Modal Ajout Personnalité -->
+    <div id="addPersonalityModal" class="modal">
+        <div class="modal-content">
+            <h3>➕ Ajouter une Personnalité</h3>
+            <div class="form-group">
+                <label>Nom :</label>
+                <input type="text" id="newPersonName">
+            </div>
+            <div class="form-group">
+                <label>Prénom :</label>
+                <input type="text" id="newPersonFirstname">
+            </div>
+            <div class="modal-buttons">
+                <button class="cancel-btn" onclick="closeModal()">Annuler</button>
+                <button class="save-btn" onclick="saveNewPersonality()">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://ubttetrqvvbcgvwjbylr.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVidHRldHJxdnZiY2d2d2pieWxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2MjM1NzYsImV4cCI6MjA3NjE5OTU3Nn0.xYm8PvgsMu7oTALS3nakrNGLCbgHKDF8lN9PiOj7QVQ';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Structure complète des 22 ministères
+        const CLASSIC_POSITIONS = [
+            {
+                sector: 'Matignon',
+                title: 'Premier ministre',
+                subsectors: ['Coordination gouvernementale', 'Relations avec le Parlement', 'Services du Premier ministre']
+            },
+            {
+                sector: 'Justice',
+                title: 'Garde des Sceaux, ministre de la Justice',
+                subsectors: ['Justice judiciaire', 'Justice administrative', 'Administration pénitentiaire', 'Aide aux victimes']
+            },
+            {
+                sector: 'Intérieur',
+                title: 'Ministre de l\'Intérieur',
+                subsectors: ['Sécurité', 'Immigration', 'Collectivités territoriales', 'Police nationale']
+            },
+            {
+                sector: 'Défense',
+                title: 'Ministre des Armées',
+                subsectors: ['Armée de terre', 'Marine nationale', 'Armée de l\'air et de l\'espace', 'Gendarmerie nationale']
+            },
+            {
+                sector: 'Affaires étrangères',
+                title: 'Ministre de l\'Europe et des Affaires étrangères',
+                subsectors: ['Diplomatie', 'Coopération internationale', 'Francophonie', 'Commerce extérieur']
+            },
+            {
+                sector: 'Économie',
+                title: 'Ministre de l\'Économie et des Finances',
+                subsectors: ['Budget', 'Fiscalité', 'Politique économique', 'Industrie']
+            },
+            {
+                sector: 'Éducation',
+                title: 'Ministre de l\'Éducation nationale',
+                subsectors: ['Enseignement primaire', 'Enseignement secondaire', 'Programmes scolaires', 'Vie scolaire']
+            },
+            {
+                sector: 'Enseignement supérieur',
+                title: 'Ministre de l\'Enseignement supérieur et de la Recherche',
+                subsectors: ['Universités', 'Recherche scientifique', 'Innovation', 'Vie étudiante']
+            },
+            {
+                sector: 'Santé',
+                title: 'Ministre de la Santé',
+                subsectors: ['Hôpitaux', 'Santé publique', 'Prévention', 'Personnes âgées']
+            },
+            {
+                sector: 'Solidarités',
+                title: 'Ministre des Solidarités',
+                subsectors: ['Handicap', 'Famille', 'Enfance', 'Protection sociale']
+            },
+            {
+                sector: 'Travail',
+                title: 'Ministre du Travail',
+                subsectors: ['Emploi', 'Formation professionnelle', 'Relations sociales', 'Inspection du travail']
+            },
+            {
+                sector: 'Agriculture',
+                title: 'Ministre de l\'Agriculture et de la Souveraineté alimentaire',
+                subsectors: ['Agriculture', 'Pêche', 'Alimentation', 'Forêt']
+            },
+            {
+                sector: 'Environnement',
+                title: 'Ministre de la Transition écologique',
+                subsectors: ['Biodiversité', 'Climat', 'Pollution', 'Économie circulaire']
+            },
+            {
+                sector: 'Énergie',
+                title: 'Ministre de la Transition énergétique',
+                subsectors: ['Énergies renouvelables', 'Nucléaire', 'Efficacité énergétique', 'Mix énergétique']
+            },
+            {
+                sector: 'Aménagement du territoire',
+                title: 'Ministre de la Cohésion des territoires',
+                subsectors: ['Aménagement territorial', 'Politique de la ville', 'Ruralité', 'Décentralisation']
+            },
+            {
+                sector: 'Culture',
+                title: 'Ministre de la Culture',
+                subsectors: ['Patrimoine', 'Arts', 'Médias', 'Cinéma']
+            },
+            {
+                sector: 'Sports',
+                title: 'Ministre des Sports et des Jeux Olympiques',
+                subsectors: ['Sport professionnel', 'Sport amateur', 'Grandes manifestations', 'Sport santé']
+            },
+            {
+                sector: 'Logement',
+                title: 'Ministre du Logement',
+                subsectors: ['Habitat social', 'Urbanisme', 'Construction', 'Rénovation urbaine']
+            },
+            {
+                sector: 'Transports',
+                title: 'Ministre des Transports',
+                subsectors: ['Transport ferroviaire', 'Transport routier', 'Transport aérien', 'Transport maritime']
+            },
+            {
+                sector: 'Mer',
+                title: 'Ministre de la Mer',
+                subsectors: ['Pêche maritime', 'Ports', 'Économie maritime', 'Littoral']
+            },
+            {
+                sector: 'Outre-mer',
+                title: 'Ministre des Outre-mer',
+                subsectors: ['DOM-TOM', 'Développement ultramarin', 'Coopération régionale']
+            },
+            {
+                sector: 'Fonction publique',
+                title: 'Ministre de la Transformation et de la Fonction publiques',
+                subsectors: ['Administration publique', 'Modernisation', 'Numérique', 'Simplification']
+            }
+        ];
+
+        // Créer une liste de tous les sous-secteurs
+        const ALL_SUBSECTORS = [];
+        CLASSIC_POSITIONS.forEach(pos => {
+            pos.subsectors.forEach(sub => {
+                ALL_SUBSECTORS.push({
+                    sector: pos.sector,
+                    subsector: sub
+                });
+            });
+        });
+
+        let personalities = [];
+        let governmentData = {
+            positions: []
+        };
+        let currentPositionIndex = null;
+
+        // Charger les personnalités
+        async function loadPersonalities() {
+            const { data, error } = await supabase
+                .from('personalities')
+                .select('*')
+                .order('name');
+            
+            if (data) {
+                personalities = data;
+                console.log('Personnalités chargées:', personalities.length);
+            } else {
+                console.error('Erreur chargement personnalités:', error);
+            }
+        }
+
+        // Rendre les fonctions globales pour qu'elles soient accessibles depuis le HTML
+        window.toggleEdit = function(index) {
+            const input = document.getElementById(`custom-${index}`);
+            input.readOnly = !input.readOnly;
+            if (!input.readOnly) {
+                input.focus();
+                input.style.background = 'white';
+                input.style.borderColor = '#667eea';
+            } else {
+                input.style.background = '#f8f9fa';
+                input.style.borderColor = '#e0e0e0';
+            }
+        };
+
+        window.searchPersonality = function(index) {
+            const searchInput = document.getElementById(`search-${index}`);
+            const resultsDiv = document.getElementById(`results-${index}`);
+            const query = searchInput.value.toLowerCase();
+
+            if (query.length < 1) {
+                resultsDiv.classList.remove('show');
+                return;
+            }
+
+            const filtered = personalities.filter(p => 
+                p.name.toLowerCase().startsWith(query) || 
+                p.firstname.toLowerCase().startsWith(query)
+            );
+
+            if (filtered.length === 0) {
+                resultsDiv.innerHTML = '<div style="padding: 10px; color: #999;">Aucune personnalité trouvée</div>';
+            } else {
+                resultsDiv.innerHTML = filtered.map(p => `
+                    <div class="autocomplete-item" onclick="selectPersonality(${index}, '${p.id}')">
+                        <strong>${p.firstname} ${p.name}</strong>${p.profession ? ' - ' + p.profession : ''}
+                    </div>
+                `).join('');
+            }
+
+            resultsDiv.classList.add('show');
+        };
+
+        window.selectPersonality = function(index, personalityId) {
+            console.log('=== SELECT PERSONALITY ===');
+            console.log('Index:', index, 'PersonalityId:', personalityId);
+            
+            const personality = personalities.find(p => String(p.id) === String(personalityId));
+            
+            if (!personality) {
+                console.error('❌ Personnalité non trouvée');
+                return;
+            }
+            
+            console.log('✅ Personnalité:', personality.firstname, personality.name);
+            
+            const searchInput = document.getElementById(`search-${index}`);
+            const resultsDiv = document.getElementById(`results-${index}`);
+            const selectedDiv = document.getElementById(`selected-${index}`);
+            const selectElement = document.getElementById(`select-${index}`);
+
+            if (searchInput) searchInput.value = `${personality.firstname} ${personality.name}`;
+            if (resultsDiv) resultsDiv.classList.remove('show');
+            if (selectElement) selectElement.value = personalityId;
+            
+            if (selectedDiv) {
+                selectedDiv.innerHTML = `<strong>✅ Sélectionné :</strong> ${personality.firstname} ${personality.name}`;
+                selectedDiv.classList.add('show');
+            }
+
+            if (!governmentData.positions[index]) {
+                governmentData.positions[index] = {};
+            }
+            governmentData.positions[index].personalityId = personalityId;
+            console.log('✅ Enregistré position', index);
+        };
+
+        window.selectFromDropdown = function(index) {
+            console.log('=== SELECT FROM DROPDOWN ===');
+            const select = document.getElementById(`select-${index}`);
+            const personalityId = select?.value;
+            
+            if (personalityId) {
+                window.selectPersonality(index, personalityId);
+            }
+        };
+
+        window.openAddPersonalityModal = function(index) {
+            currentPositionIndex = index;
+            document.getElementById('addPersonalityModal').classList.add('show');
+        };
+
+        window.closeModal = function() {
+            document.getElementById('addPersonalityModal').classList.remove('show');
+            document.getElementById('newPersonName').value = '';
+            document.getElementById('newPersonFirstname').value = '';
+        };
+
+        window.saveNewPersonality = async function() {
+            const name = document.getElementById('newPersonName').value;
+            const firstname = document.getElementById('newPersonFirstname').value;
+
+            if (!name || !firstname) {
+                alert('Nom et prénom sont obligatoires');
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('personalities')
+                .insert([{ name, firstname, status: 'neant' }])
+                .select();
+
+            if (error) {
+                alert('Erreur : ' + error.message);
+                return;
+            }
+
+            personalities.push(data[0]);
+            window.closeModal();
+            window.selectPersonality(currentPositionIndex, data[0].id);
+            populatePersonalitySelects();
+            alert('✅ Personnalité ajoutée !');
+        };
+
+        window.addDelegate = function() {
+            const delegatesContainer = document.getElementById('delegatesContainer');
+            const delegateId = Date.now();
+
+            const subsectorsOptions = ALL_SUBSECTORS.map(item => 
+                `<option value="${item.sector}|${item.subsector}">${item.sector} - ${item.subsector}</option>`
+            ).join('');
+
+            const groupedByProfession = {};
+            personalities.forEach(p => {
+                const profession = p.profession || 'Sans profession';
+                if (!groupedByProfession[profession]) {
+                    groupedByProfession[profession] = [];
+                }
+                groupedByProfession[profession].push(p);
+            });
+
+            const sortedProfessions = Object.keys(groupedByProfession).sort();
+            let personalityOptionsHTML = '<option value="">-- Sélectionner --</option>';
+            sortedProfessions.forEach(profession => {
+                personalityOptionsHTML += `<optgroup label="${profession}">`;
+                groupedByProfession[profession].forEach(p => {
+                    personalityOptionsHTML += `<option value="${p.id}">${p.firstname} ${p.name}</option>`;
+                });
+                personalityOptionsHTML += '</optgroup>';
+            });
+
+            const delegateCard = document.createElement('div');
+            delegateCard.className = 'delegate-card';
+            delegateCard.id = `delegate-${delegateId}`;
+            delegateCard.innerHTML = `
+                <div class="delegate-header">
+                    <strong>Ministre délégué</strong>
+                    <button class="remove-btn" onclick="removeDelegate(${delegateId})">❌ Retirer</button>
+                </div>
+                <div class="form-group">
+                    <label>Rattachement :</label>
+                    <select id="delegate-sector-${delegateId}">
+                        <option value="">-- Sélectionner --</option>
+                        ${subsectorsOptions}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>En charge de :</label>
+                    <input type="text" id="delegate-title-${delegateId}" placeholder="Ex: la transition numérique">
+                </div>
+                <div class="form-group">
+                    <label>Personnalité :</label>
+                    <div class="personality-search">
+                        <div class="search-input-wrapper">
+                            <input type="text" id="delegate-search-${delegateId}" placeholder="🔍 Rechercher..." 
+                                   oninput="searchDelegatePersonality('${delegateId}')" 
+                                   onfocus="searchDelegatePersonality('${delegateId}')">
+                            <div class="autocomplete-results" id="delegate-results-${delegateId}"></div>
+                        </div>
+                        <select class="personality-select" id="delegate-select-${delegateId}" 
+                                onchange="selectDelegateFromDropdown('${delegateId}'); return false;">
+                            ${personalityOptionsHTML}
+                        </select>
+                    </div>
+                    <div class="selected-personality" id="delegate-selected-${delegateId}"></div>
+                </div>
+            `;
+            delegatesContainer.appendChild(delegateCard);
+        };
+
+        window.removeDelegate = function(delegateId) {
+            document.getElementById(`delegate-${delegateId}`)?.remove();
+        };
+
+        window.searchDelegatePersonality = function(delegateId) {
+            const searchInput = document.getElementById(`delegate-search-${delegateId}`);
+            const resultsDiv = document.getElementById(`delegate-results-${delegateId}`);
+            const query = searchInput?.value.toLowerCase() || '';
+
+            if (query.length < 1) {
+                resultsDiv?.classList.remove('show');
+                return;
+            }
+
+            const filtered = personalities.filter(p => 
+                p.name.toLowerCase().startsWith(query) || 
+                p.firstname.toLowerCase().startsWith(query)
+            );
+
+            if (filtered.length === 0) {
+                resultsDiv.innerHTML = '<div style="padding: 10px; color: #999;">Aucune personnalité trouvée</div>';
+            } else {
+                resultsDiv.innerHTML = filtered.map(p => `
+                    <div class="autocomplete-item" onclick="selectDelegatePersonality('${delegateId}', '${p.id}')">
+                        <strong>${p.firstname} ${p.name}</strong>${p.profession ? ' - ' + p.profession : ''}
+                    </div>
+                `).join('');
+            }
+
+            resultsDiv?.classList.add('show');
+        };
+
+        window.selectDelegatePersonality = function(delegateId, personalityId) {
+            console.log('=== SELECT DELEGATE ===');
+            const personality = personalities.find(p => String(p.id) === String(personalityId));
+            
+            if (!personality) {
+                console.error('❌ Personnalité non trouvée');
+                return;
+            }
+            
+            const searchInput = document.getElementById(`delegate-search-${delegateId}`);
+            const resultsDiv = document.getElementById(`delegate-results-${delegateId}`);
+            const selectedDiv = document.getElementById(`delegate-selected-${delegateId}`);
+            const selectElement = document.getElementById(`delegate-select-${delegateId}`);
+
+            if (searchInput) {
+                searchInput.value = `${personality.firstname} ${personality.name}`;
+                searchInput.dataset.personalityId = personalityId;
+            }
+            if (resultsDiv) resultsDiv.classList.remove('show');
+            if (selectElement) selectElement.value = personalityId;
+            
+            if (selectedDiv) {
+                selectedDiv.innerHTML = `<strong>✅ Sélectionné :</strong> ${personality.firstname} ${personality.name}`;
+                selectedDiv.classList.add('show');
+            }
+            
+            console.log('✅ Délégué enregistré');
+        };
+
+        window.selectDelegateFromDropdown = function(delegateId) {
+            const select = document.getElementById(`delegate-select-${delegateId}`);
+            const personalityId = select?.value;
+            
+            if (personalityId) {
+                window.selectDelegatePersonality(delegateId, personalityId);
+            }
+        };
+
+        window.saveDraft = async function() {
+            const govName = document.getElementById('govName').value;
+            if (!govName) {
+                alert('Veuillez donner un nom au gouvernement');
+                return;
+            }
+            alert('💾 Brouillon sauvegardé : ' + govName);
+        };
+
+        window.submitGovernment = async function() {
+            const govName = document.getElementById('govName').value;
+            if (!govName) {
+                alert('Veuillez donner un nom au gouvernement');
+                return;
+            }
+            
+            const positions = [];
+            CLASSIC_POSITIONS.forEach((pos, index) => {
+                if (governmentData.positions[index]?.personalityId) {
+                    positions.push({
+                        sector: pos.sector,
+                        personalityId: governmentData.positions[index].personalityId
+                    });
+                }
+            });
+            
+            if (positions.length === 0) {
+                alert('Veuillez sélectionner au moins un ministre');
+                return;
+            }
+            
+            alert(`✅ Gouvernement publié !\n${govName}\n${positions.length} ministres`);
+        };
+
+        // Peupler tous les selects de personnalités groupés par profession
+        function populatePersonalitySelects() {
+            console.log('=== DEBUT REMPLISSAGE SELECTS ===');
+            console.log('Nombre de personnalités:', personalities.length);
+            
+            if (personalities.length === 0) {
+                console.error('❌ AUCUNE PERSONNALITE - Les selects resteront vides');
+                alert('⚠️ Aucune personnalité dans la base de données. Ajoutez-en d\'abord !');
+                return;
+            }
+
+            // Grouper les personnalités par profession
+            const groupedByProfession = {};
+            personalities.forEach(p => {
+                const profession = p.profession || 'Sans profession';
+                if (!groupedByProfession[profession]) {
+                    groupedByProfession[profession] = [];
+                }
+                groupedByProfession[profession].push(p);
+            });
+
+            console.log('Professions trouvées:', Object.keys(groupedByProfession));
+
+            // Trier les professions
+            const sortedProfessions = Object.keys(groupedByProfession).sort();
+
+            // Générer les options HTML
+            let optionsHTML = '<option value="">-- Sélectionner par profession --</option>';
+            sortedProfessions.forEach(profession => {
+                optionsHTML += `<optgroup label="${profession}">`;
+                groupedByProfession[profession].forEach(p => {
+                    optionsHTML += `<option value="${p.id}">${p.firstname} ${p.name}</option>`;
+                });
+                optionsHTML += '</optgroup>';
+            });
+
+            console.log('HTML généré, longueur:', optionsHTML.length);
+
+            // Appliquer aux selects des ministres
+            let selectsRemplis = 0;
+            let selectsNonTrouves = 0;
+            
+            CLASSIC_POSITIONS.forEach((pos, index) => {
+                const select = document.getElementById(`select-${index}`);
+                if (select) {
+                    select.innerHTML = optionsHTML;
+                    selectsRemplis++;
+                } else {
+                    selectsNonTrouves++;
+                    console.error(`❌ Select non trouvé pour index ${index}`);
+                }
+            });
+            
+            console.log(`✅ ${selectsRemplis} selects remplis`);
+            console.log(`❌ ${selectsNonTrouves} selects non trouvés`);
+            console.log('=== FIN REMPLISSAGE SELECTS ===');
+        }
+
+        // Initialisation
+        async function init() {
+            await loadPersonalities();
+            renderPositions();
+            // Attendre que le DOM soit prêt puis remplir les selects
+            setTimeout(() => {
+                populatePersonalitySelects();
+            }, 200);
+        }
+
+        // Générer les cartes de postes
+        function renderPositions() {
+            const container = document.getElementById('positionsContainer');
+            container.innerHTML = '';
+
+            CLASSIC_POSITIONS.forEach((pos, index) => {
+                const card = document.createElement('div');
+                card.className = 'position-card';
+                card.innerHTML = `
+                    <div class="position-header">
+                        <div class="position-info">
+                            <div class="position-line">
+                                <span class="label-text">Secteur :</span>
+                                <span class="value-text">${pos.sector}</span>
+                            </div>
+                            <div class="position-line">
+                                <span class="label-text">Fonction :</span>
+                                <span class="value-text">${pos.title}</span>
+                            </div>
+                            <div class="position-line">
+                                <span class="label-text">Intitulé :</span>
+                                <input type="text" 
+                                       class="custom-input" 
+                                       id="custom-${index}" 
+                                       placeholder="ex: en charge de la gestion des pandémies"
+                                       readonly>
+                            </div>
+                        </div>
+                        <button class="edit-btn" onclick="toggleEdit(${index})">✏️ Modifier</button>
+                    </div>
+
+                    <div class="subsectors">
+                        <strong>Sous-secteurs :</strong> ${pos.subsectors.join(', ')}
+                    </div>
+
+                    <div class="personality-section">
+                        <div class="personality-search">
+                            <div class="search-input-wrapper">
+                                <input type="text" 
+                                       id="search-${index}" 
+                                       placeholder="🔍 Rechercher une personnalité..."
+                                       oninput="searchPersonality(${index})"
+                                       onfocus="searchPersonality(${index})">
+                                <div class="autocomplete-results" id="results-${index}"></div>
+                            </div>
+                            <select class="personality-select" id="select-${index}" onchange="selectFromDropdown(${index}); return false;">
+                                <option value="">-- Sélectionner par profession --</option>
+                            </select>
+                        </div>
+                        <button class="add-personality-btn" onclick="openAddPersonalityModal(${index})">
+                            ➕ Ajouter une nouvelle personnalité
+                        </button>
+                        <div class="selected-personality" id="selected-${index}"></div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Activer/désactiver l'édition de l'intitulé
+        function toggleEdit(index) {
+            const input = document.getElementById(`custom-${index}`);
+            input.readOnly = !input.readOnly;
+            if (!input.readOnly) {
+                input.focus();
+                input.style.background = 'white';
+                input.style.borderColor = '#667eea';
+            } else {
+                input.style.background = '#f8f9fa';
+                input.style.borderColor = '#e0e0e0';
+            }
+        }
+
+        // Recherche de personnalité avec autocomplete
+        function searchPersonality(index) {
+            const searchInput = document.getElementById(`search-${index}`);
+            const resultsDiv = document.getElementById(`results-${index}`);
+            const query = searchInput.value.toLowerCase();
+
+            if (query.length < 1) {
+                resultsDiv.classList.remove('show');
+                return;
+            }
+
+            // Chercher uniquement au DÉBUT des noms et prénoms
+            const filtered = personalities.filter(p => 
+                p.name.toLowerCase().startsWith(query) || 
+                p.firstname.toLowerCase().startsWith(query)
+            );
+
+            if (filtered.length === 0) {
+                resultsDiv.innerHTML = '<div style="padding: 10px; color: #999;">Aucune personnalité trouvée</div>';
+            } else {
+                resultsDiv.innerHTML = filtered.map(p => `
+                    <div class="autocomplete-item" onclick="selectPersonality(${index}, '${p.id}')">
+                        <strong>${p.firstname} ${p.name}</strong>${p.profession ? ' - ' + p.profession : ''}
+                    </div>
+                `).join('');
+            }
+
+            resultsDiv.classList.add('show');
+        }
+
+        // Sélectionner une personnalité
+        function selectPersonality(index, personalityId) {
+            console.log('=== SELECT PERSONALITY ===');
+            console.log('Index:', index, 'PersonalityId:', personalityId, 'Type:', typeof personalityId);
+            
+            const personality = personalities.find(p => String(p.id) === String(personalityId));
+            
+            if (!personality) {
+                console.error('❌ Personnalité non trouvée avec id:', personalityId);
+                console.log('IDs disponibles:', personalities.map(p => p.id));
+                alert('Erreur : personnalité non trouvée');
+                return;
+            }
+            
+            console.log('✅ Personnalité trouvée:', personality.firstname, personality.name);
+            
+            const searchInput = document.getElementById(`search-${index}`);
+            const resultsDiv = document.getElementById(`results-${index}`);
+            const selectedDiv = document.getElementById(`selected-${index}`);
+            const selectElement = document.getElementById(`select-${index}`);
+
+            if (searchInput) searchInput.value = `${personality.firstname} ${personality.name}`;
+            if (resultsDiv) resultsDiv.classList.remove('show');
+            
+            // Synchroniser le select
+            if (selectElement) {
+                selectElement.value = personalityId;
+            }
+            
+            if (selectedDiv) {
+                selectedDiv.innerHTML = `
+                    <strong>✅ Sélectionné :</strong> ${personality.firstname} ${personality.name}
+                `;
+                selectedDiv.classList.add('show');
+            }
+
+            if (!governmentData.positions[index]) {
+                governmentData.positions[index] = {};
+            }
+            governmentData.positions[index].personalityId = personalityId;
+            
+            console.log('✅ Personnalité enregistrée dans governmentData position', index);
+        }
+
+        // Ouvrir modal ajout personnalité
+        function openAddPersonalityModal(index) {
+            currentPositionIndex = index;
+            document.getElementById('addPersonalityModal').classList.add('show');
+        }
+
+        // Fermer modal
+        function closeModal() {
+            document.getElementById('addPersonalityModal').classList.remove('show');
+            document.getElementById('newPersonName').value = '';
+            document.getElementById('newPersonFirstname').value = '';
+        }
+
+        // Sauvegarder nouvelle personnalité
+        async function saveNewPersonality() {
+            const name = document.getElementById('newPersonName').value;
+            const firstname = document.getElementById('newPersonFirstname').value;
+
+            if (!name || !firstname) {
+                alert('Nom et prénom sont obligatoires');
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('personalities')
+                .insert([{ name, firstname, status: 'neant' }])
+                .select();
+
+            if (error) {
+                alert('Erreur lors de l\'ajout : ' + error.message);
+                return;
+            }
+
+            personalities.push(data[0]);
+            closeModal(); // Fermer AVANT de sélectionner
+            selectPersonality(currentPositionIndex, data[0].id);
+            populatePersonalitySelects(); // Repeupler les selects
+            alert('✅ Personnalité ajoutée avec succès !');
+        }
+
+        // Ajouter un ministre délégué
+        function addDelegate() {
+            const delegatesContainer = document.getElementById('delegatesContainer');
+            const delegateId = Date.now();
+
+            // Créer les options du menu déroulant avec TOUS les sous-secteurs
+            const subsectorsOptions = ALL_SUBSECTORS.map(item => 
+                `<option value="${item.sector}|${item.subsector}">${item.sector} - ${item.subsector}</option>`
+            ).join('');
+
+            // Créer les options des personnalités groupées par profession
+            const groupedByProfession = {};
+            personalities.forEach(p => {
+                const profession = p.profession || 'Sans profession';
+                if (!groupedByProfession[profession]) {
+                    groupedByProfession[profession] = [];
+                }
+                groupedByProfession[profession].push(p);
+            });
+
+            const sortedProfessions = Object.keys(groupedByProfession).sort();
+            let personalityOptionsHTML = '<option value="">-- Sélectionner par profession --</option>';
+            sortedProfessions.forEach(profession => {
+                personalityOptionsHTML += `<optgroup label="${profession}">`;
+                groupedByProfession[profession].forEach(p => {
+                    personalityOptionsHTML += `<option value="${p.id}">${p.firstname} ${p.name}</option>`;
+                });
+                personalityOptionsHTML += '</optgroup>';
+            });
+
+            const delegateCard = document.createElement('div');
+            delegateCard.className = 'delegate-card';
+            delegateCard.id = `delegate-${delegateId}`;
+            delegateCard.innerHTML = `
+                <div class="delegate-header">
+                    <strong>Ministre délégué</strong>
+                    <button class="remove-btn" onclick="removeDelegate(${delegateId})">❌ Retirer</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Rattachement (secteur - sous-secteur) :</label>
+                    <select id="delegate-sector-${delegateId}">
+                        <option value="">-- Sélectionnez un secteur/sous-secteur --</option>
+                        ${subsectorsOptions}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>En charge de :</label>
+                    <input type="text" id="delegate-title-${delegateId}" 
+                           placeholder="Ex: la transition numérique">
+                </div>
+
+                <div class="form-group">
+                    <label>Personnalité :</label>
+                    <div class="personality-search">
+                        <div class="search-input-wrapper">
+                            <input type="text" 
+                                   id="delegate-search-${delegateId}" 
+                                   placeholder="🔍 Rechercher une personnalité..."
+                                   oninput="searchDelegatePersonality(${delegateId})"
+                                   onfocus="searchDelegatePersonality(${delegateId})">
+                            <div class="autocomplete-results" id="delegate-results-${delegateId}"></div>
+                        </div>
+                        <select class="personality-select" id="delegate-select-${delegateId}" onchange="selectDelegateFromDropdown('${delegateId}'); return false;">
+                            ${personalityOptionsHTML}
+                        </select>
+                    </div>
+                    <div class="selected-personality" id="delegate-selected-${delegateId}"></div>
+                </div>
+            `;
+            delegatesContainer.appendChild(delegateCard);
+        }
+
+        // Retirer un ministre délégué
+        function removeDelegate(delegateId) {
+            document.getElementById(`delegate-${delegateId}`).remove();
+        }
+
+        // Recherche personnalité pour délégué
+        function searchDelegatePersonality(delegateId) {
+            const searchInput = document.getElementById(`delegate-search-${delegateId}`);
+            const resultsDiv = document.getElementById(`delegate-results-${delegateId}`);
+            const query = searchInput.value.toLowerCase();
+
+            if (query.length < 1) {
+                resultsDiv.classList.remove('show');
+                return;
+            }
+
+            // Chercher uniquement au DÉBUT des noms et prénoms
+            const filtered = personalities.filter(p => 
+                p.name.toLowerCase().startsWith(query) || 
+                p.firstname.toLowerCase().startsWith(query)
+            );
+
+            if (filtered.length === 0) {
+                resultsDiv.innerHTML = '<div style="padding: 10px; color: #999;">Aucune personnalité trouvée</div>';
+            } else {
+                resultsDiv.innerHTML = filtered.map(p => `
+                    <div class="autocomplete-item" onclick="selectDelegatePersonality('${delegateId}', '${p.id}')">
+                        <strong>${p.firstname} ${p.name}</strong>${p.profession ? ' - ' + p.profession : ''}
+                    </div>
+                `).join('');
+            }
+
+            resultsDiv.classList.add('show');
+        }
+
+        // Sélectionner personnalité pour délégué
+        function selectDelegatePersonality(delegateId, personalityId) {
+            console.log('=== SELECT DELEGATE PERSONALITY ===');
+            console.log('DelegateId:', delegateId, 'PersonalityId:', personalityId);
+            
+            const personality = personalities.find(p => String(p.id) === String(personalityId));
+            
+            if (!personality) {
+                console.error('❌ Personnalité non trouvée avec id:', personalityId);
+                alert('Erreur : personnalité non trouvée');
+                return;
+            }
+            
+            console.log('✅ Personnalité trouvée:', personality.firstname, personality.name);
+            
+            const searchInput = document.getElementById(`delegate-search-${delegateId}`);
+            const resultsDiv = document.getElementById(`delegate-results-${delegateId}`);
+            const selectedDiv = document.getElementById(`delegate-selected-${delegateId}`);
+            const selectElement = document.getElementById(`delegate-select-${delegateId}`);
+
+            if (searchInput) {
+                searchInput.value = `${personality.firstname} ${personality.name}`;
+                searchInput.dataset.personalityId = personalityId;
+            }
+            if (resultsDiv) resultsDiv.classList.remove('show');
+            
+            // Synchroniser le select
+            if (selectElement) {
+                selectElement.value = personalityId;
+            }
+            
+            if (selectedDiv) {
+                selectedDiv.innerHTML = `
+                    <strong>✅ Sélectionné :</strong> ${personality.firstname} ${personality.name}
+                `;
+                selectedDiv.classList.add('show');
+            }
+            
+            console.log('✅ Personnalité enregistrée pour délégué');
+        }
+
+        // Sélection depuis le menu déroulant pour délégué
+        function selectDelegateFromDropdown(delegateId) {
+            console.log('=== SELECT DELEGATE FROM DROPDOWN ===');
+            console.log('DelegateId:', delegateId);
+            
+            const select = document.getElementById(`delegate-select-${delegateId}`);
+            if (!select) {
+                console.error('❌ Select délégué non trouvé pour id:', delegateId);
+                return;
+            }
+            
+            const personalityId = select.value;
+            console.log('PersonalityId sélectionné:', personalityId);
+            
+            if (!personalityId) {
+                console.log('Aucune personnalité sélectionnée (valeur vide)');
+                return;
+            }
+            
+            // Trouver la personnalité
+            const personality = personalities.find(p => String(p.id) === String(personalityId));
+            console.log('Personnalité trouvée:', personality);
+            
+            if (personality) {
+                console.log('✅ Appel de selectDelegatePersonality');
+                selectDelegatePersonality(delegateId, personality.id);
+            } else {
+                console.error('❌ Personnalité NON trouvée avec id:', personalityId);
+            }
+        }
+
+        // Sauvegarder en brouillon
+        async function saveDraft() {
+            const govName = document.getElementById('govName').value;
+            const govComment = document.getElementById('govComment').value;
+
+            if (!govName) {
+                alert('Veuillez donner un nom au gouvernement');
+                return;
+            }
+
+            // Récupérer toutes les données
+            const positions = [];
+            CLASSIC_POSITIONS.forEach((pos, index) => {
+                const customTitle = document.getElementById(`custom-${index}`).value;
+                const personalityId = governmentData.positions[index]?.personalityId;
+
+                if (personalityId) {
+                    positions.push({
+                        sector: pos.sector,
+                        title: pos.title,
+                        customTitle: customTitle,
+                        subsectors: pos.subsectors,
+                        personalityId: personalityId
+                    });
+                }
+            });
+
+            // Récupérer les délégués
+            const delegates = [];
+            document.querySelectorAll('.delegate-card').forEach(card => {
+                const delegateId = card.id.split('-')[1];
+                const sectorSelect = document.getElementById(`delegate-sector-${delegateId}`);
+                const sectorValue = sectorSelect?.value;
+                const title = document.getElementById(`delegate-title-${delegateId}`)?.value;
+                const searchInput = document.getElementById(`delegate-search-${delegateId}`);
+                const personalityId = searchInput?.dataset.personalityId;
+
+                if (sectorValue && title && personalityId) {
+                    const [sector, subsector] = sectorValue.split('|');
+                    delegates.push({ sector, subsector, title, personalityId });
+                }
+            });
+
+            const governmentToSave = {
+                name: govName,
+                type: 'classique',
+                status: 'brouillon',
+                comment: govComment,
+                positions: positions,
+                delegates: delegates
+            };
+
+            console.log('Brouillon à sauvegarder:', governmentToSave);
+
+            alert('💾 Brouillon sauvegardé avec succès !\n\n' +
+                  `Nom: ${govName}\n` +
+                  `Ministres: ${positions.length}\n` +
+                  `Délégués: ${delegates.length}\n\n` +
+                  `Vous pourrez le modifier et le publier plus tard.`);
+        }
+
+        // Soumettre le gouvernement
+        async function submitGovernment() {
+            const govName = document.getElementById('govName').value;
+            const govComment = document.getElementById('govComment').value;
+
+            if (!govName) {
+                alert('Veuillez donner un nom au gouvernement');
+                return;
+            }
+
+            // Récupérer toutes les données
+            const positions = [];
+            CLASSIC_POSITIONS.forEach((pos, index) => {
+                const customTitle = document.getElementById(`custom-${index}`).value;
+                const personalityId = governmentData.positions[index]?.personalityId;
+
+                if (personalityId) {
+                    positions.push({
+                        sector: pos.sector,
+                        title: pos.title,
+                        customTitle: customTitle,
+                        subsectors: pos.subsectors,
+                        personalityId: personalityId
+                    });
+                }
+            });
+
+            if (positions.length === 0) {
+                alert('Veuillez sélectionner au moins un ministre');
+                return;
+            }
+
+            // Récupérer les délégués
+            const delegates = [];
+            document.querySelectorAll('.delegate-card').forEach(card => {
+                const delegateId = card.id.split('-')[1];
+                const sectorSelect = document.getElementById(`delegate-sector-${delegateId}`);
+                const sectorValue = sectorSelect?.value;
+                const title = document.getElementById(`delegate-title-${delegateId}`)?.value;
+                const searchInput = document.getElementById(`delegate-search-${delegateId}`);
+                const personalityId = searchInput?.dataset.personalityId;
+
+                if (sectorValue && title && personalityId) {
+                    const [sector, subsector] = sectorValue.split('|');
+                    delegates.push({ sector, subsector, title, personalityId });
+                }
+            });
+
+            const governmentToSave = {
+                name: govName,
+                type: 'classique',
+                comment: govComment,
+                positions: positions,
+                delegates: delegates
+            };
+
+            console.log('Gouvernement à sauvegarder:', governmentToSave);
+
+            alert('✅ Gouvernement enregistré avec succès !\n\n' +
+                  `Nom: ${govName}\n` +
+                  `Ministres: ${positions.length}\n` +
+                  `Délégués: ${delegates.length}`);
+        }
+
+        // Fermer autocomplete en cliquant ailleurs
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.personality-search')) {
+                document.querySelectorAll('.autocomplete-results').forEach(div => {
+                    div.classList.remove('show');
+                });
+            }
+        });
+
+        // Démarrer l'application
+        init();
+    </script>
+</body>
+</html>
