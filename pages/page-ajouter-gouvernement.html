@@ -583,7 +583,7 @@
                         sector: pos.sector,
                         title: pos.title,
                         custom_title: customTitle,
-                        subsectors: pos.subsectors.join(', '), // Format avec virgules
+                        subsectors: pos.subsectors, // Array directement, pas de join !
                         personality_id: governmentData.positions[index].personalityId
                     });
                 }
@@ -608,7 +608,7 @@
                         delegates.push({
                             sector: sector,
                             title: titleInput.value,
-                            subsectors: subsector, // Un seul subsector pour les délégués
+                            subsectors: [subsector], // Array avec un seul élément
                             personality_id: searchInput.dataset.personalityId
                         });
                     }
